@@ -1217,6 +1217,16 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 			<add position="before" trim="false"><![CDATA[<?php // BOF - Zappo - vQModerator - ONE LINE - Add vQModerator Links ?>]]></add>
 		</operation>
 	
+		<operation info="Just a comment, for completeness">
+			<search trim="true"><![CDATA[alert-success]]></search>
+			<add position="before" trim="false"><![CDATA[<?php // BOF - Zappo - vQModerator - ONE LINE - Add class for vQModerator installer ?>]]></add>
+		</operation>
+	
+		<operation>
+			<search trim="true"><![CDATA[alert-success]]></search>
+			<add position="replace" trim="false"><![CDATA[alert-success not-install]]></add>
+		</operation>
+	
 		<operation>
 			<search trim="true"><![CDATA[$text_list]]></search>
 			<add position="after" trim="false"><![CDATA[<?php // BOF - Zappo - vQModerator - ONE LINE - Show current vQMod version ?>
@@ -1261,6 +1271,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 function install(url) {
   // Initial installation layout setup
   var msg = ($('#install-msg').length >= 1) ? $('#install-msg').html() : '';
+  if ($('.not-install').length) $('.not-install').remove();
   if ($('.alert-danger').length === 0) $('.alert-info').html('').addClass('alert-success').removeClass('alert-info');
   $('.alert-danger').html('').addClass('alert-success').removeClass('alert-danger');
   if (msg !== '') {
