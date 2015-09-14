@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.0</version>
+	<version>0.0.1</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
@@ -501,7 +501,7 @@
 				foreach ($chmods as $file => $chmod) $this->model_extension_modification->setPermission($file, $chmod);
 				if (strpos(strtolower($response), 'writ')) $json['error'] = sprintf ($this->language->get('error_vqmod_write'), $this->url->link('extension/modification/vqmodinstall', 'token=' . $this->session->data['token'] . '&step=3', 'SSL')); // not writeable
 				elseif (strpos(strtolower($response), 'path')) $json['error'] = $this->language->get('error_vqmod_path'); // could not find opencart
-				elseif (strpos(strtolower($response), 'upgrade')) $json['success'] = $this->language->get('text_vqmod_upgrade'); // updrade complete
+				elseif (strpos(strtolower($response), 'upgrade')) $json['success'] = sprintf($this->language->get('text_vqmod_upgrade'), 'vQMod'); // updrade complete
 				elseif (strpos(strtolower($response), 'already')) $json['success'] = $this->language->get('text_vqmod_already'); // updrade complete
 				elseif (strpos(strtolower($response), 'installed')) $json['success'] = $this->language->get('text_vqmod_install'); // updrade complete
 				else $json['error'] = $this->language->get('error_vqmod_empty'); // not writeable
@@ -526,7 +526,7 @@
 
 		$response = json_decode($response, true);
 		foreach ($response as $rel) {
-			if (strpos($rel['name'], 'opencart')) {
+			if (strpos($rel['name'], 'vQModerator') !== false) {
 				$ver = str_replace('-', '', filter_var($rel['name'], FILTER_SANITIZE_NUMBER_INT));
 				if ($ver > $result['version']) {
 					$result['version'] = $ver;
@@ -537,7 +537,7 @@
 		return $result;
 	}
 
-	// Install vQMod
+	// Install vQModerator
 	public function VQModeratorInstall() {
 		$this->load->language('extension/modification');
 		$json = array();
@@ -545,7 +545,7 @@
 			$step = $this->request->get['step'];
 			if ($step == 0) {
 				// Download vQMod
-				$vqmod = $this->checkVQModUpdate();
+				$vqmod = $this->checkVQModeratorUpdate();
 				$options = array(
 					CURLOPT_RETURNTRANSFER => true,     // return web page
 					CURLOPT_HEADER         => false,    // don't return headers
@@ -609,12 +609,12 @@
 				$path = DIR_UPLOAD . 'temp-vqmod/upload';
 				$files = array();
 				if (file_exists($path)) {
-					$path = array($path . '/*');
-					while (count($path) != 0) {
-						$next = array_shift($path);
+					$paths = array($path . '/*');
+					while (count($paths) != 0) {
+						$next = array_shift($paths);
 						foreach ((array)glob($next) as $file) {
 							if (is_dir($file)) {
-								$path[] = $file . '/*';
+								$paths[] = $file . '/*';
 							} else {
 								$files[] = $file;
 							}
@@ -627,7 +627,7 @@
 						else file_put_contents(DIR_UPLOAD . 'temp-vqmod/newfiles', str_replace($path . '/', '', $file) . "\n", FILE_APPEND);
 					}
 					if (!$success) {
-						$json['error'] = $this->language->get('error_move_files');
+						$json['error'] = $this->language->get('error_copy_files');
 					} else {
 						$json['success'] = sprintf($this->language->get('text_copied'), $this->url->link('extension/modification/vqmoderatorinstall', 'token=' . $this->session->data['token'] . '&step=3', 'SSL'), 'vQModerator');
 					}
@@ -638,7 +638,7 @@
 				// Install vQModerator sql and xml
 				$this->load->model('extension/modification');
 
-				$mod_sql = '';
+				$success = $mod_sql = '';
 				if (file_exists(DIR_UPLOAD . 'temp-vqmod/install.sql')) {
 					$mod_sql = file_get_contents(DIR_UPLOAD . 'temp-vqmod/install.sql');
 					$lines = file(DIR_UPLOAD . 'temp-vqmod/install.sql');
@@ -666,21 +666,26 @@
 				// Put new vQModerator stuff in database
 				if (file_exists(DIR_UPLOAD . 'temp-vqmod/install.xml')) {
 					$vqmod = $this->model_extension_modification->getModificationByCode('vqmoderator');
-					$vqmod->row['xml'] = file_get_contents(DIR_UPLOAD . 'temp-vqmod/install.xml');
+					$vqmod['xml'] = file_get_contents(DIR_UPLOAD . 'temp-vqmod/install.xml');
 					$use_errors = libxml_use_internal_errors(true);
-					$xml = simplexml_load_string($vqmod->row['xml']);
-					$vqmod->row['version'] = $xml->version();
-					$vqmod->row['author'] = $xml->author();
+					$xml = simplexml_load_string($vqmod['xml']);
+					$vqmod['version'] = $xml->version;
+					$vqmod['author'] = $xml->author;
 					if (file_exists(DIR_UPLOAD . 'temp-vqmod/newfiles')) {
-						$vqmod->row['mod_files'] = file(DIR_UPLOAD . 'temp-vqmod/newfiles', FILE_IGNORE_NEW_LINES);
+						$vqmod['mod_files'] = file(DIR_UPLOAD . 'temp-vqmod/newfiles', FILE_IGNORE_NEW_LINES);
 					}
-					$vqmod->row['mod_sql'] = $mod_sql;
-					$vqmod->row['mod_php'] = $mod_php;
+					$vqmod['mod_sql'] = $mod_sql;
+					$vqmod['mod_php'] = $mod_php;
 					libxml_clear_errors();
 					libxml_use_internal_errors($use_errors); // Reset error setting
-					$this->model_extension_modification->saveModification($vqmod->row);
+					$success = $this->model_extension_modification->saveModification($vqmod);
 				}
-				$this->model_extension_modification->deleteFile(DIR_CACHE . 'cache.vqmoderator');
+				if ($success) {
+					$json['success'] = sprintf($this->language->get('text_vqmod_upgrade'), 'vQModerator'); // updrade complete
+					$this->model_extension_modification->deleteFile(DIR_CACHE . 'cache.vqmoderator');
+				} else {
+					$json['error'] = $this->language->get('error_install');
+				}
 				$this->load->controller('extension/installer/clear', true);
 			}
 		} else {
@@ -726,7 +731,7 @@ $_['text_unzipped']     = 'Do you want vQMod to write in the same Log file as OC
 		'<div id="install-msg"><br/><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Copying Files, and adjusting for custom themes and admin folder</div>';
 $_['text_vqm_unzipped']  = '<div data-href="%s" id="redirect-me" data-time="3"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Copying vQModerator files</div>';
 $_['text_copied']        = '<div data-href="%s" id="redirect-me" data-time="3"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Installing %s</div>';
-$_['text_vqmod_upgrade'] = 'Success! vQMod is upgraded!';
+$_['text_vqmod_upgrade'] = 'Success! %s is upgraded!';
 $_['text_vqmod_already'] = 'vQMod is already installed!';
 $_['text_vqmod_install'] = 'Success! vQMod is installed!';
 // BOF - Zappo - vQModerator - ONE LINE - Add vQMod Install messages]]></add>
@@ -754,11 +759,13 @@ $_['error_find_files']  = 'Warning: Could not find the files. They should be the
 		'<div id="install-msg"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Downloading %s</div>';
 $_['error_unzip']       = 'Warning: Could not unzip the file. Please <a href="%s" target="_blank">install/update %s manually.</a>';
 $_['error_move_files']  = 'Warning: Could not move the vQMod files. Make sure the folder <b>vqmod/</b> and <b>vqmod/xml/</b> is writable!';
+$_['error_copy_files']  = 'Warning: Could not copy the vQModerator files. Please <a href="http://www.vqmoderator.com/" target="_blank">install/update vQModerator manually.</a>';
 $_['error_vqmod_write'] = 'Warning: Could not write files. Make sure <b>/' . basename(DIR_APPLICATION) . '</b>, <b>/' . basename(DIR_APPLICATION) . '/index.php</b> and <b>/index.php</b> are writable, and '.
 		'<a href="%s" class="btn btn-default install-btn" onclick="install($(this).prop(\'href\')); return false;"><i class="fa fa-lg fa-cog"></i>&nbsp; Try Again</a>'.
 		'<div id="install-msg"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Installing vQMod</div>';
 $_['error_vqmod_path']  = 'Warning: Could not find OpenCart path!';
 $_['error_vqmod_empty'] = 'Warning: Could not get a response from vQMod Installer!';
+$_['error_install']     = 'Warning: Could not Install vQModerator! Please <a href="http://www.vqmoderator.com/" target="_blank">install/update vQModerator manually.</a>';
 // EOF - Zappo - vQModerator - Add vQMod Install warnings]]></add>
 		</operation>
 	</file>
@@ -1180,12 +1187,13 @@ $_['error_vqmod_empty'] = 'Warning: Could not get a response from vQMod Installe
 		return $success;
 	}
 
-	private function deleteFile($file) {
+	public function deleteFile($file) {
+		if (!file_exists($file)) return true;
 		if ($this->config->get('config_ftp_status')) {
 			if (!$this->ftp_connection) $this->doFTP();
 
 			if ($this->ftp_connection && $this->ftp_root) {
-				$file = str_replace($this->ftp_root, '', str_replace('../', '', $file));
+				$file = str_replace(array($this->ftp_root, '../'), '', $file);
 				if (is_dir($file)) return ftp_rmdir($this->ftp_connection, $file);
 				return ftp_delete($this->ftp_connection, $file);
 			}
@@ -1253,6 +1261,7 @@ $_['error_vqmod_empty'] = 'Warning: Could not get a response from vQMod Installe
 function install(url) {
   // Initial installation layout setup
   var msg = ($('#install-msg').length >= 1) ? $('#install-msg').html() : '';
+  if ($('.alert-danger').length === 0) $('.alert-info').html('').addClass('alert-success').removeClass('alert-info');
   $('.alert-danger').html('').addClass('alert-success').removeClass('alert-danger');
   if (msg !== '') {
     $('#install-msg').remove();
