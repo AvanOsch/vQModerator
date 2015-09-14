@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>0.0.1</version>
+	<version>1.0.0</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
