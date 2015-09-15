@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
@@ -186,6 +186,18 @@
 			<add position="after" trim="false"><![CDATA[ * https://github.com/vqmod/vqmod/wiki/Scripting]]></add>
 		</operation>
 	
+		<operation>
+			<search trim="true"><![CDATA[$this->request->post['selected'] as $modification_id]]></search>
+			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Refresh when removing vQModerator
+			$vqm = $this->model_extension_modification->getModificationByCode('vqmoderator');]]></add>
+		</operation>
+	
+		<operation>
+			<search trim="true"><![CDATA[$this->request->post['selected'] as $modification_id]]></search>
+			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Refresh when removing vQModerator
+				if ($vqm['modification_id'] == $modification_id) $this->clear(true);]]></add>
+		</operation>
+	
 		<operation info="Just a comment, for completeness">
 			<search trim="true"><![CDATA[function refresh(]]></search>
 			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Return if we're just refreshing from the Editor]]></add>
@@ -228,6 +240,30 @@
 			<add position="before" trim="false" offset="3"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Return false if we're just refreshing from the Editor (no permission)
 		if ($modding) return false;
 ]]></add>
+		</operation>
+	
+		<operation>
+			<search trim="true"><![CDATA[function clear(]]></search>
+			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Return if we're just clearing from the Editor]]></add>
+		</operation>
+	
+		<operation>
+			<search trim="true"><![CDATA[function clear(]]></search>
+			<add position="replace" trim="false"><![CDATA[function clear($modding = false
+]]></add>
+		</operation>
+	
+		<operation>
+			<search index="2" trim="true"><![CDATA[$this->response->redirect($this->url->link('extension/modification']]></search>
+			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Return true if we're just refreshing from the Editor
+			if ($modding) return true;]]></add>
+		</operation>
+	
+		<operation>
+			<search trim="true"><![CDATA[disableModification]]></search>
+			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - TWO LINES - Refresh when disabling vQModerator
+			$vqm = $this->model_extension_modification->getModificationByCode('vqmoderator');
+			if ($vqm['modification_id'] == $this->request->get['modification_id']) $this->clear(true);]]></add>
 		</operation>
 	
 		<operation>
@@ -509,6 +545,8 @@
 				elseif (strpos(strtolower($response), 'already')) $json['success'] = $this->language->get('text_vqmod_already'); // updrade complete
 				elseif (strpos(strtolower($response), 'installed')) $json['success'] = $this->language->get('text_vqmod_install'); // updrade complete
 				else $json['error'] = $this->language->get('error_vqmod_empty'); // not writeable
+				$this->model_extension_modification->setPermission(dirname(DIR_SYSTEM) . '/vqmod');
+				$this->model_extension_modification->setPermission(dirname(DIR_SYSTEM) . '/vqmod/vqcache');
 				$this->model_extension_modification->deleteFile(DIR_CACHE . 'cache.vqmoderator');
 				$this->model_extension_modification->doFTP(false);
 			}
@@ -938,41 +976,41 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		<operation>
 			<search trim="true"><![CDATA[return $query->rows;]]></search>
 			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add vQMods to list
-		// Get version from cache
-		$cache = DIR_CACHE . 'cache.vqmoderator';
-		if (file_exists($cache)) {
-			$versions = unserialize(file_get_contents($cache));
-			if (is_array($versions) && isset($versions['vqmod'])) $vqmver = $versions['vqmod'];
-		} else {
-			$vqmver = 0;
-		}
-		$use_errors = libxml_use_internal_errors(true); // Save error setting
-		$modfiles = array();
-		foreach ($query->rows as $id => $qry) {
-			if (substr($qry['xml'], -4) == '.xml') {
-				$file = dirname(DIR_SYSTEM) . '/' . $qry['xml'];
-				// Check for disabled file
-				if (!file_exists($file)) $file = $file . '_';
-				if (file_exists($file)) {
-					$query->rows[$id]['xml'] = file_get_contents($file);
-					$xml = simplexml_load_file($file);
-				} else {
-					// File not found... Delete from database, and continue
-					$this->deleteModification($qry['modification_id']);
-					continue;
-				}
-				$modfiles[] = $qry['xml'];
-			} else {
-				$xml = simplexml_load_string($qry['xml']);
-			}
-			$query->rows[$id]['type'] = ((!isset($xml->vqmver) && !isset($xml->id)) || substr($qry['xml'], -10) == '.ocmod.xml') ? 'OCMod' : 'vQMod';
-			if (isset($xml->vqmver)) {
-				$required = (isset($xml->vqmver['required']) && (int)filter_var($xml->vqmver, FILTER_SANITIZE_NUMBER_INT) > $vqmver) ? 'color:red;' : '';
-				$query->rows[$id]['type'] .= ($required ? '<span data-toggle="tooltip" title="Required vQMod version">' : '') . '<small style="float:right;' . $required . '">' . (isset($xml->vqmver['required']) ? '* ' : '') . 'v.' . (string)$xml->vqmver . '</small>' . ($required ? '</span>' : '');
-			}
-		}
 		// Look for, and add new mod files to database
 		if (isset($data['vqmod']) && $data['vqmod']) {
+      // Get version from cache
+      $cache = DIR_CACHE . 'cache.vqmoderator';
+      if (file_exists($cache)) {
+        $versions = unserialize(file_get_contents($cache));
+        if (is_array($versions) && isset($versions['vqmod'])) $vqmver = $versions['vqmod'];
+      } else {
+        $vqmver = 0;
+      }
+      $use_errors = libxml_use_internal_errors(true); // Save error setting
+      $modfiles = array();
+      foreach ($query->rows as $id => $qry) {
+        if (substr($qry['xml'], -4) == '.xml') {
+          $file = dirname(DIR_SYSTEM) . '/' . $qry['xml'];
+          // Check for disabled file
+          if (!file_exists($file)) $file = $file . '_';
+          if (file_exists($file)) {
+            $query->rows[$id]['xml'] = file_get_contents($file);
+            $xml = simplexml_load_file($file);
+          } else {
+            // File not found... Delete from database, and continue
+            $this->deleteModification($qry['modification_id']);
+            continue;
+          }
+          $modfiles[] = $qry['xml'];
+        } else {
+          $xml = simplexml_load_string($qry['xml']);
+        }
+        $query->rows[$id]['type'] = ((!isset($xml->vqmver) && !isset($xml->id)) || substr($qry['xml'], -10) == '.ocmod.xml') ? 'OCMod' : 'vQMod';
+        if (isset($xml->vqmver)) {
+          $required = (isset($xml->vqmver['required']) && (int)filter_var($xml->vqmver, FILTER_SANITIZE_NUMBER_INT) > $vqmver) ? 'color:red;' : '';
+          $query->rows[$id]['type'] .= ($required ? '<span data-toggle="tooltip" title="Required vQMod version">' : '') . '<small style="float:right;' . $required . '">' . (isset($xml->vqmver['required']) ? '* ' : '') . 'v.' . (string)$xml->vqmver . '</small>' . ($required ? '</span>' : '');
+        }
+      }
 			$files = glob(DIR_SYSTEM.'*.{ocmod,vqmod}.xml',GLOB_BRACE);
 			$path = dirname(DIR_SYSTEM) . '/vqmod/xml';
 			$allfiles = is_dir($path) ? glob($path . '/*.xml*') : array();
@@ -1113,9 +1151,11 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		if (!$set) {
 			if (!is_writable($file)) {
 				if ($this->ftp_connection) {
-					$modded = ftp_chmod($this->ftp_connection, 0777, str_replace($this->ftp_root, '', $file));
+					$modded = ftp_chmod($this->ftp_connection, 0755, str_replace($this->ftp_root, '', $file));
+					if (!is_writable($file)) $modded = ftp_chmod($this->ftp_connection, 0777, str_replace($this->ftp_root, '', $file));
 				} else {
-					$modded = chmod($file, 0777);
+					$modded = chmod($file, 0755);
+					if (!is_writable($file)) $modded = chmod($file, 0777);
 				}
 				if ($modded === false) $perms = false;
 			}
@@ -1289,11 +1329,13 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
   #install-msg { display:none; }
 </style>
 <script type='text/javascript'>
+var installing = false;
 function install(url) {
   // Initial installation layout setup
   var msg = ($('#install-msg').length >= 1) ? $('#install-msg').html() : '';
   if ($('.not-install').length) $('.not-install').remove();
-  if ($('.alert-danger').length === 0) $('.alert-info').html('').addClass('alert-success').removeClass('alert-info');
+  if ($('.alert-danger').length === 0 && !installing) $('.alert-info').html('').addClass('alert-success').removeClass('alert-info');
+  installing = true;
   $('.alert-danger').html('').addClass('alert-success').removeClass('alert-danger');
   if (msg !== '') {
     $('#install-msg').remove();

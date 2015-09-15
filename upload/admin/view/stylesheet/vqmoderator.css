@@ -50,7 +50,7 @@ div.vqtest {
   top:8px;
   right:38px;
   padding: 8px 10px;
-  border: solid 1px #BCDF00;
+  border: solid 1px #CCCCCC;
   -webkit-border-radius:7px 7px 7px 7px;
   -moz-border-radius:7px 7px 7px 7px;
   -khtml-border-radius:7px 7px 7px 7px;
@@ -133,7 +133,7 @@ div.arrow:hover {
 
 .CodeMirror {
   margin-top: 8px;
-  border: #BCDF00 1px solid;
+  border: #CCCCCC 1px solid;
   -webkit-border-radius:3px 3px 3px 3px;
   -moz-border-radius:3px 3px 3px 3px;
   -khtml-border-radius:3px 3px 3px 3px;

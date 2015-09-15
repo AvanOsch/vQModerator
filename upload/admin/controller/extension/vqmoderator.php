@@ -353,9 +353,9 @@ class ControllerExtensionVqmoderator extends Controller {
 			'vqmod_show_regex' => (isset($data['vqmod_show_regex']) ? $data['vqmod_show_regex'] : 1),
 			'vqmod_show_info' => (isset($data['vqmod_show_info']) ? $data['vqmod_show_info'] : 1),
 			'vqmod_show_test' => (isset($data['vqmod_show_test']) ? $data['vqmod_show_test'] : 1),
-			'vqmod_color_main' => (isset($data['vqmod_color_main']) ? $data['vqmod_color_main'] : '#CAE3FF'),
-			'vqmod_color_file' => (isset($data['vqmod_color_file']) ? $data['vqmod_color_file'] : '#DAFFAF'),
-			'vqmod_color_oper' => (isset($data['vqmod_color_oper']) ? $data['vqmod_color_oper'] : '#F8FFCB'),
+			'vqmod_color_main' => (isset($data['vqmod_color_main']) ? $data['vqmod_color_main'] : '#C8C8C8'),
+			'vqmod_color_file' => (isset($data['vqmod_color_file']) ? $data['vqmod_color_file'] : '#C7DFEC'),
+			'vqmod_color_oper' => (isset($data['vqmod_color_oper']) ? $data['vqmod_color_oper'] : '#EEF5F9'),
 		);
 		if ($get === 'html') {
 			// Return configuration page html
