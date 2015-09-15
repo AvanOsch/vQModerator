@@ -2,12 +2,17 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
 
 	<file path="admin/controller/extension/installer.php">
+		<operation>
+			<search trim="true"><![CDATA[ocmod.xml') {]]></search>
+			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add vQMod Support (Check uploaded filename)]]></add>
+		</operation>
+	
 		<operation>
 			<search trim="true"><![CDATA[ocmod.xml') {]]></search>
 			<add position="replace" trim="false"><![CDATA[vqmod.zip' && substr($this->request->files['file']['name'], -10) != '.ocmod.xml' && substr($this->request->files['file']['name'], -10) != '.vqmod.xml') {]]></add>
@@ -21,7 +26,7 @@
 	
 		<operation info="Just a comment, for completeness">
 			<search trim="true"><![CDATA[xml', 'token=' . $this->session->data['token']]]></search>
-			<add position="before" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add vQMod Support]]></add>
+			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add vQMod Support]]></add>
 		</operation>
 	
 		<operation>
@@ -72,7 +77,7 @@
 			<search trim="true"><![CDATA[sprintf($this->language->get('error_ftp_file')]]></search>
 			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - TWO LINES - Delete files when removing exstension
 								} else {
-									$modfiles[] = $destination]]></add>
+									$modfiles[] = $destination;]]></add>
 		</operation>
 	
 		<operation>
@@ -249,7 +254,7 @@
 	
 		<operation>
 			<search trim="true"><![CDATA[$filter_data = array(]]></search>
-			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add vQModerator files to list
+			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add (new) vQMod files to list
 			'vqmod' => true,]]></add>
 		</operation>
 	
@@ -312,8 +317,7 @@
 	
 		<operation>
 			<search trim="true"><![CDATA[return !$this->error]]></search>
-			<add position="after" trim="false" offset="1"><![CDATA[
-// BOF - Zappo - vQModerator - Add functions
+			<add position="after" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - Add functions
 	// Check vQMod installation, and see if its up to date every day
 	private function checkVQMod($interval = 24) {
 		if (!class_exists('VQMod')) {
@@ -734,7 +738,7 @@ $_['text_copied']        = '<div data-href="%s" id="redirect-me" data-time="3"><
 $_['text_vqmod_upgrade'] = 'Success! %s is upgraded!';
 $_['text_vqmod_already'] = 'vQMod is already installed!';
 $_['text_vqmod_install'] = 'Success! vQMod is installed!';
-// BOF - Zappo - vQModerator - ONE LINE - Add vQMod Install messages]]></add>
+// EOF - Zappo - vQModerator - ONE LINE - Add vQMod Install messages]]></add>
 		</operation>
 	
 		<operation>
@@ -843,7 +847,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		<operation>
 			<search trim="true"><![CDATA[function deleteModification(]]></search>
 			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add delete for vQMods
-		$result = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
+		$result = $this->db->query("SELECT xml FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
 		if (substr($result->row['xml'], -4) == '.xml') {
 			if (file_exists(dirname(DIR_SYSTEM) . '/' . $result->row['xml'])) $this->deleteFile(dirname(DIR_SYSTEM) . '/' . $result->row['xml']);
 			elseif (file_exists(dirname(DIR_SYSTEM) . '/' . $result->row['xml'] . '_')) $this->deleteFile(dirname(DIR_SYSTEM) . '/' . $result->row['xml'] . '_');
@@ -1016,8 +1020,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 	
 		<operation>
 			<search index="1" trim="true"><![CDATA[return $query->row;]]></search>
-			<add position="after" trim="false" offset="1"><![CDATA[
-// BOF - Zappo - vQModerator - Add funtions
+			<add position="after" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - Add funtions
 	public function getModFiles($modification_id) {
 		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification_files WHERE modification_id = '" . $modification_id . "'");
 		return $query->row;
@@ -1277,7 +1280,8 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 			<search trim="true"><![CDATA[$footer]]></search>
 			<add position="before" trim="false"><![CDATA[<style>
   #install-msg { display:none; }
-</style><script type='text/javascript'>
+</style>
+<script type='text/javascript'>
 function install(url) {
   // Initial installation layout setup
   var msg = ($('#install-msg').length >= 1) ? $('#install-msg').html() : '';
