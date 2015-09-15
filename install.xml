@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
@@ -847,7 +847,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		<operation>
 			<search trim="true"><![CDATA[function deleteModification(]]></search>
 			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add delete for vQMods
-		$result = $this->db->query("SELECT xml FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
+		$result = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
 		if (substr($result->row['xml'], -4) == '.xml') {
 			if (file_exists(dirname(DIR_SYSTEM) . '/' . $result->row['xml'])) $this->deleteFile(dirname(DIR_SYSTEM) . '/' . $result->row['xml']);
 			elseif (file_exists(dirname(DIR_SYSTEM) . '/' . $result->row['xml'] . '_')) $this->deleteFile(dirname(DIR_SYSTEM) . '/' . $result->row['xml'] . '_');
@@ -885,10 +885,17 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		<operation>
 			<search trim="true"><![CDATA[function disableModification(]]></search>
 			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add enable/disable for vQMods
-		$result = $this->db->query("SELECT xml FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
+		$result = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
 		if (substr($result->row['xml'], -4) == '.xml') {
 			$file = dirname(DIR_SYSTEM) . '/' . $result->row['xml'];
 			$this->renameFile($file, $file . '_');
+		}
+		// Disabling vQModerator!!! --> Delete vQMods from database
+		if ($result->row['code'] == 'vqmoderator') {
+			$result = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification");
+			foreach ($result->rows as $delete) {
+				if (substr($delete['xml'], -4) == '.xml') $this->db->query("DELETE FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$delete['modification_id'] . "'");
+			}
 		}
 // EOF - Zappo - vQModerator - Add enable/disable for vQMods]]></add>
 		</operation>
