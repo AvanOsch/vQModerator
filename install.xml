@@ -819,14 +819,14 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		if ($result && isset($data['mod_files'])) {
 			$files = $newfiles = array();
 			foreach ($data['mod_files'] as $file) {
-				// New files array below won't work, as the files obviously already exist...
-				if (!file_exists('../' . $file)) $newfiles[] = dirname(DIR_SYSTEM) . '/' . $file;
+				// New files array below won't work, as the files obviously already exist... (except when updating vQModerator)
+				if (!file_exists('../' . $file) || $data['code'] == 'vqmoderator') $newfiles[] = dirname(DIR_SYSTEM) . '/' . $file;
 				$files[] = $file;
 			}
 		}
 		if ($result && (isset($files) || $data['mod_sql'] || $data['mod_php'])) {
 			$files = (isset($files)) ? serialize($files) : '';
-			$newfiles = (isset($newfiles)) ? serialize($newfiles) : '';
+			$newfiles = (isset($newfiles) && $newfiles) ? serialize($newfiles) : '';
 			$sql = html_entity_decode($data['mod_sql']);
 			$php = html_entity_decode($data['mod_php']);
 			$result = $this->db->query("SELECT modification_id FROM " . DB_PREFIX . "modification_files WHERE modification_id = '" . (int)$data['modification_id'] . "'");
@@ -843,10 +843,19 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		<operation>
 			<search trim="true"><![CDATA[function deleteModification(]]></search>
 			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add delete for vQMods
-		$result = $this->db->query("SELECT xml FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
+		$result = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$modification_id . "'");
 		if (substr($result->row['xml'], -4) == '.xml') {
 			if (file_exists(dirname(DIR_SYSTEM) . '/' . $result->row['xml'])) $this->deleteFile(dirname(DIR_SYSTEM) . '/' . $result->row['xml']);
 			elseif (file_exists(dirname(DIR_SYSTEM) . '/' . $result->row['xml'] . '_')) $this->deleteFile(dirname(DIR_SYSTEM) . '/' . $result->row['xml'] . '_');
+		}
+		// Un-installing vQModerator!!! --> Delete vQMods and settings from database, and remove modification_files table
+		if ($result->row['code'] == 'vqmoderator') {
+			$drop_files = true;
+			$result = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification");
+			foreach ($result->rows as $delete) {
+				if (substr($delete['xml'], -4) == '.xml') $this->db->query("DELETE FROM " . DB_PREFIX . "modification WHERE modification_id = '" . (int)$delete['modification_id'] . "'");
+			}
+			$this->db->query("DELETE FROM " . DB_PREFIX . "setting WHERE code = 'vqmod'");
 		}
 // EOF - Zappo - vQModerator - Add delete for vQMods
 // BOF - Zappo - vQModerator - Delete files when removing exstension
@@ -854,6 +863,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		if ($query->row) $this->deleteFiles(unserialize($query->row['newfiles']));
 		$this->doFTP(false); // Disconnect FTP when done.
 		$this->db->query("DELETE FROM " . DB_PREFIX . "modification_files WHERE modification_id = '" . (int)$modification_id . "'");
+		if (isset($drop_files)) $this->db->query("DROP TABLE " . DB_PREFIX . "modification_files");
 // EOF - Zappo - vQModerator - Delete files when removing exstension]]></add>
 		</operation>
 	
