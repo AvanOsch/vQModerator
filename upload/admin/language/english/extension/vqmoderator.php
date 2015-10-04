@@ -35,6 +35,7 @@ $_['text_expand']            = 'Expand ';
 $_['text_collapse']          = 'Collapse ';
 $_['text_this_file']         = 'this File';
 $_['text_this_operation']    = 'this Operation';
+$_['text_prev_operations']   = 'Off-Screen Operations';
 $_['text_all_operations']    = 'All Operations';
 $_['text_modpack']           = 'Modification Package';
 $_['text_confirm_upload']    = 'Are you sure you want to upload to:';
@@ -84,6 +85,7 @@ $_['entry_vqmod_show_test']  = 'Show Search Test areas:';
 $_['entry_vqmod_color_main'] = 'Main Panel Color:';
 $_['entry_vqmod_color_file'] = 'File Panels Color:';
 $_['entry_vqmod_color_oper'] = 'Operation Panels Color:';
+$_['entry_vqmod_updates']    = 'Check for vQMod(erator) updates';
 $_['text_mod_config']        = 'vQModerator Settings';
 $_['text_settings_success']  = 'Saved vQModerator settings!';
 $_['text_vqmod_mod_test']    = 'Folder with OpenCart versions to test the Search string<br/>localhosts can use <b>../Example/</b> to get to other folders<br/>(starting from store root)';
@@ -96,6 +98,7 @@ $_['text_vqmod_show_test']   = 'Hide Search Test areas if you don\'t use them';
 $_['text_vqmod_color_main']  = 'Set the color of the Mod info panel';
 $_['text_vqmod_color_file']  = 'Set the color of the File info panels';
 $_['text_vqmod_color_oper']  = 'Set the color of the Operation info panels';
+$_['text_vqmod_updates']     = 'Check online for vQMod and vQModerator updates';
 
 // Placeholder
 $_['placeholder_name']       = 'Modification Name';
@@ -136,6 +139,7 @@ $_['button_settings']        = 'Settings';
 
 // Error
 $_['error_loading']          = 'There was an error retrieving your XML file. Possibly the XML was not properly formed.';
+$_['error_saving']           = 'There was an error saving.';
 $_['error_modification']     = 'Warning: The XML for this Modification contains more than one modification node. Upon saving, these modifications will be compiled into one and subsequently will only be attributed to one name, author, version, link and code. This will have no effect on the overall function of the Modification.';
 $_['error_position_all']     = 'Warning: This file contains a "Search Replace All" tag!\nThis functionality is removed starting vQMod v2.4.0!\n\nPlease make sure you make the appropriate changes to this Operation!\nIt is marked in Red - (Fix before saving!!!)';
 $_['error_file_selected']    = 'It seems you have selected a file.\nPlease select or enter the folder to upload to.';

@@ -16,6 +16,7 @@ class ControllerExtensionVqmoderator extends Controller {
 		$this->document->addScript('view/javascript/codemirror/php.js');
 		$this->document->addScript('view/javascript/codemirror/xml.js');
 		$this->document->addScript('view/javascript/codemirror/matchbrackets.js');
+		$this->document->addScript('view/javascript/jscolor.js');
 		// Added back jQuery UI, because I don't want to figure out OpenCart AutoComplete (common.js), and need $.dialog()
 		$this->document->addScript('view/javascript/jquery/ui/jquery-ui.min.js');
 		$this->document->addStyle('view/javascript/jquery/ui/jquery-ui.min.css');
@@ -32,7 +33,10 @@ class ControllerExtensionVqmoderator extends Controller {
 			return false;
 		}
 		$xml = $this->model_extension_modification->getModification($this->request->get['mod']);
-		if (substr($xml['xml'], -4) == '.xml') $xml['xml'] = file_get_contents(dirname(DIR_SYSTEM) . '/' . $xml['xml']);
+		if (strtolower(substr($xml['xml'], -4)) == '.xml') {
+			$file = dirname(DIR_SYSTEM) . '/' . $xml['xml'] . ($xml['status'] ? '' : '_');
+			$xml['xml'] = file_get_contents($file);
+		}
 
 		echo $xml['xml'];
 	}
@@ -69,7 +73,7 @@ class ControllerExtensionVqmoderator extends Controller {
 				$data['mod_sql'] = isset($files['install_sql']) ? $files['install_sql'] : '';
 				$data['mod_php'] = isset($files['install_php']) ? $files['install_php'] : '';
 				$data['mod_type'] = strtolower($mod['type']) . (($data['files'] || $data['mod_sql'] || $data['mod_php']) ? 'z' : '');
-				$data['mod_file'] = (substr(strtolower($mod['xml']), -4) == '.xml') ? $mod['xml'] : '';
+				$data['mod_file'] = (strtolower(substr($mod['xml'], -4)) == '.xml') ? $mod['xml'] : '';
 				$data['status'] = $mod['status'];
 				$data['modification_id'] = $mod['modification_id'];
 				$url = "&mod=" . $this->request->get['mod'];
@@ -145,6 +149,7 @@ class ControllerExtensionVqmoderator extends Controller {
 		$data['text_collapse'] = $this->language->get('text_collapse');
 		$data['text_this_file'] = $this->language->get('text_this_file');
 		$data['text_this_operation'] = $this->language->get('text_this_operation');
+		$data['text_prev_operations'] = $this->language->get('text_prev_operations');
 		$data['text_all_operations'] = $this->language->get('text_all_operations');
 		$data['text_modpack'] = $this->language->get('text_modpack');
 		$data['text_confirm_upload'] = $this->language->get('text_confirm_upload');
@@ -178,6 +183,7 @@ class ControllerExtensionVqmoderator extends Controller {
 		$data['button_upload'] = $this->language->get('button_upload');
 
 		$data['error_loading'] = $this->language->get('error_loading');
+		$data['error_saving'] = $this->language->get('error_saving');
 		$data['error_modification'] = $this->language->get('error_modification');
 		$data['error_position_all'] = $this->language->get('error_position_all');
 		$data['error_file_selected'] = $this->language->get('error_file_selected');
@@ -253,11 +259,13 @@ class ControllerExtensionVqmoderator extends Controller {
 				$file = $this->request->post['mod_file'];
 				$filecode = str_replace(array('.vqmod.xml','.ocmod.xml','.xml'), '', basename($file));
 				$filename = ($this->request->post['code'] != $filecode) ? dirname($file) . '/' . $this->request->post['code'] . '.' . substr($mod_type, 0, 5) . '.xml' : $file;
+				if (!$file && substr($mod_type, 0, 5) == 'vqmod') $filename = 'vqmod/xml' . $filename;
+				if (!$this->request->post['status'] && substr($filename, -4) == '.xml') $filename .= '_'; // Set filename to disabled
 				if (($filename && substr($mod_type, 0, 5) == 'vqmod') || ($file && $mod_type == 'ocmod')) {
 					if (file_put_contents(DIR_UPLOAD . basename($filename), $this->request->post['xml'])) {
 						if ($this->model_extension_modification->renameFile(DIR_UPLOAD . basename($filename), dirname(DIR_SYSTEM) . '/' . $filename)) {
-							if ($file != $filename) $this->model_extension_modification->deleteFile(dirname(DIR_SYSTEM) . '/' . $file);
-							$this->request->post['xml'] = $filename;
+							if ($file && $file != $filename && file_exists(dirname(DIR_SYSTEM) . '/' . $file)) $this->model_extension_modification->deleteFile(dirname(DIR_SYSTEM) . '/' . $file);
+							$this->request->post['xml'] = rtrim($filename, '_');
 						} else {
 							$this->session->data['warning'] = sprintf($this->language->get('error_move_file_to'), $filename);
 							$this->response->redirect($this->url->link('extension/modification/refresh', 'token=' . $this->session->data['token'], 'SSL'));
@@ -297,11 +305,13 @@ class ControllerExtensionVqmoderator extends Controller {
 				$file = $this->request->post['mod_file'];
 				$filecode = str_replace(array('.vqmod.xml','.ocmod.xml','.xml'), '', basename($file));
 				$filename = ($this->request->post['code'] != $filecode) ? dirname($file) . '/' . $this->request->post['code'] . '.' . substr($mod_type, 0, 5) . '.xml' : $file;
+				if (!$file && substr($mod_type, 0, 5) == 'vqmod') $filename = 'vqmod/xml' . $filename;
+				if (!$this->request->post['status'] && substr($filename, -4) == '.xml') $filename .= '_'; // Set file to disabled
 				if (($filename && substr($mod_type, 0, 5) == 'vqmod') || ($file && $mod_type == 'ocmod')) {
 					if (file_put_contents(DIR_UPLOAD . basename($filename), $this->request->post['xml'])) {
 						if ($this->model_extension_modification->renameFile(DIR_UPLOAD . basename($filename), dirname(DIR_SYSTEM) . '/' . $filename)) {
-							if ($file != $filename) $this->model_extension_modification->deleteFile(dirname(DIR_SYSTEM) . '/' . $file);
-							$this->request->post['xml'] = $filename;
+							if ($file && $file != $filename && file_exists(dirname(DIR_SYSTEM) . '/' . $file)) $this->model_extension_modification->deleteFile(dirname(DIR_SYSTEM) . '/' . $file);
+							$this->request->post['xml'] = rtrim($filename, '_');
 						} else {
 							$json['warning'] = sprintf($this->language->get('error_move_file_to'), $file);
 							$this->response->setOutput(json_encode($json));
@@ -309,8 +319,10 @@ class ControllerExtensionVqmoderator extends Controller {
 					}
 				}
 				if (!isset($this->request->get['mod'])) {
-					if ($this->model_extension_modification->addModification($this->request->post)) {
+					$new_id = $this->model_extension_modification->addModification($this->request->post);
+					if ($new_id) {
 						$json['success'] = $this->language->get('text_update');
+						$json['id'] = $new_id;
 					} else {
 						$json['warning'] = $this->language->get('warning_save_fail');
 					}
@@ -343,8 +355,7 @@ class ControllerExtensionVqmoderator extends Controller {
 			$data = $this->model_setting_setting->getSetting('vqmod');
 		}
 		// Make string one folder deep, with trailing slash
-		$ocdir = dirname(DIR_SYSTEM);
-		$data['vqmod_mod_test'] = (isset($data['vqmod_mod_test'])) ? rtrim($data['vqmod_mod_test'], '/') . '/' : $ocdir . '/vqmod/test/';
+		$data['vqmod_mod_test'] = (isset($data['vqmod_mod_test']) && $data['vqmod_mod_test']) ? rtrim($data['vqmod_mod_test'], '/') . '/' : '';
 		$sorted = array(
 			'vqmod_mod_test' => $data['vqmod_mod_test'],
 			'vqmod_test_delay' => (isset($data['vqmod_test_delay']) ? $data['vqmod_test_delay'] : 800),
@@ -356,10 +367,11 @@ class ControllerExtensionVqmoderator extends Controller {
 			'vqmod_color_main' => (isset($data['vqmod_color_main']) ? $data['vqmod_color_main'] : '#C8C8C8'),
 			'vqmod_color_file' => (isset($data['vqmod_color_file']) ? $data['vqmod_color_file'] : '#C7DFEC'),
 			'vqmod_color_oper' => (isset($data['vqmod_color_oper']) ? $data['vqmod_color_oper'] : '#EEF5F9'),
+			'vqmod_updates' => (isset($data['vqmod_updates']) ? $data['vqmod_updates'] : 1),
 		);
 		if ($get === 'html') {
 			// Return configuration page html
-			$checkbox = array('vqmod_show_trim', 'vqmod_show_regex', 'vqmod_show_info', 'vqmod_show_test');
+			$checkbox = array('vqmod_show_trim', 'vqmod_show_regex', 'vqmod_show_info', 'vqmod_show_test', 'vqmod_updates');
 			$vqdir = array('vqmod_mod_test');
 			$html = "  <table style=\"width:100%\">\n";
 			foreach ($sorted as $vqname => $vqval) {
@@ -376,21 +388,116 @@ class ControllerExtensionVqmoderator extends Controller {
 					$html .= "</label>\n".
 							"      </td>\n";
 				if (in_array($vqname, $checkbox)) {
-					$html .= "      <td class=\"col-sm-8\"><input name=\"" . $vqname . "\" type=\"checkbox\" value=\"1\" " . ($vqval ? 'checked="checked" ' : '') . "data-orig=\"" . $vqval . "\" class=\"form-control\"/></td>\n";
+					$html .= "      <td class=\"col-sm-8\"><input name=\"" . $vqname . "\" type=\"checkbox\" value=\"" . $vqval . "\" " . ($vqval ? 'checked="checked" ' : '') . "data-orig=\"" . $vqval . "\" class=\"form-control\"/></td>\n";
 				} else {
-					$html .= "      <td class=\"col-sm-8\"><input name=\"" . $vqname . "\"" . (in_array($vqname, $vqdir) ? ' id="path_' . str_replace('vqmod_', '', $vqname) . '"' : '') . " type=\"text\" class=\"form-control" . (in_array($vqname, $vqdir) ? ' vqdir' : '') . (strpos($vqname, 'color') ? '  vqcolor" style="width:120px;" id="' . str_replace('vqmod_', '', $vqname) : '') . "\" value=\"" . $vqval . "\" data-orig=\"" . $vqval . "\"/></td>\n";
+					$html .= "      <td class=\"col-sm-8\"><input name=\"" . $vqname . "\"" . (in_array($vqname, $vqdir) ? ' id="path_' . str_replace('vqmod_', '', $vqname) . '"' : '') . " type=\"text\" class=\"form-control" . (in_array($vqname, $vqdir) ? ' vqdir' : '') . (strpos($vqname, 'color') ? ' color {hash:true} vqcolor" style="width:120px;" id="' . str_replace('vqmod_', '', $vqname) : '') . "\" value=\"" . $vqval . "\" data-orig=\"" . $vqval . "\"/></td>\n";
 				}
 				$html .= "    </tr>\n";
 			}
 			$html .= "  </table>\n";
 			return $html;
 		}
-		if (isset($this->request->post) || $this->config->get('vqmod_mod_test') === null) {
+		if (isset($this->request->post) || $this->config->get('vqmod_updates') === null) {
 			// Save settings if POSTed, or if newest setting is not set (first install/update)
 			foreach ($sorted as $key => $val) $this->config->set($key, $val);
 			$this->model_setting_setting->editSetting('vqmod', $sorted);
 		}
 		$json['success'] = $this->language->get('text_settings_success');
+		$this->response->setOutput(json_encode($json));
+	}
+
+	// Generate all enabled modifications to structured directories
+	public function generateAll() {
+		$tests = $this->config->get('vqmod_mod_test');
+		if ($tests) {
+			$files = $ofiles = $json = array();
+			$use_errors = libxml_use_internal_errors(true); // Save error setting
+			$xml_dir = '../vqmod/xml/';
+			$dirfiles = glob($xml_dir . '*.xml');
+			// Check all vQMod xml files for files to mod
+			foreach ($dirfiles as $path) {
+				$file = basename($path);
+				if ($file != 'vqmod_opencart.xml') {
+					$xml = simplexml_load_file($path);
+					if (isset($xml->file)) {
+						foreach ($xml->file as $file) {
+							// Collect all the files to mod
+							$thefiles = explode(',', $file['name']);
+							foreach ($thefiles as $filename) {
+								$filename = (isset($file['path']) ? $file['path'] : '') . trim($filename);
+								if (!in_array($filename, $files)) $files[] = $filename;
+							}
+						}
+					}
+				}
+			}
+			libxml_use_internal_errors($use_errors); // Reset error setting
+
+			$this->load->language('extension/modification');
+			$this->load->model('extension/modification');
+			// Refresh OCMOD files, clear vQMod files, and delete previous generated files
+			$this->load->controller('extension/modification/refresh', true);
+			$path = array('../' . $tests . 'modded/*');
+			while (count($path) != 0) {
+				$next = array_shift($path);
+				foreach (glob($next) as $file) {
+					if (is_dir($file)) {
+						$path[] = $file . '/*';
+					}
+					$ofiles[] = $file;
+				}
+			}
+			rsort($ofiles);
+			$this->model_extension_modification->deleteFiles($ofiles);
+			// Generate and copy vQMod files
+			$success = ($files) ? false : true;
+			if ($files) {
+				foreach ($files as $file) {
+					$genfiles = glob('../' . $file);
+					foreach ($genfiles as $file) {
+						$file = str_replace('../', '', $file);
+						$genfile = VQMod::modcheck($file);
+						if (is_file($genfile)) {
+							$newfile = $tests . 'modded/' . $file;
+							$success = $this->model_extension_modification->copyFile($genfile, $newfile, true);
+							if (!$success) {
+								$json['error'] = 'Could not copy <b>' . $genfile . '</b> to <b>' . $newfile . '</b>';
+								break 2;
+							}
+						}
+					}
+				}
+			}
+			// Copy OCMod files to test folder (if not already there)
+			if ($success) {
+				$path = array(DIR_MODIFICATION . '*');
+				while (count($path) != 0) {
+					$next = array_shift($path);
+					foreach (glob($next) as $file) {
+						if (is_dir($file)) {
+							$path[] = $file . '/*';
+						} else {
+							$ofiles[] = $file;
+						}
+					}
+				}
+				rsort($ofiles);
+				// Copy all modification files
+				foreach ($ofiles as $file) {
+					$newfile = str_replace(DIR_MODIFICATION, $tests . 'modded/', $file);
+					if ($file != DIR_MODIFICATION . 'index.html' && !file_exists($newfile) && is_file($file)) {
+						$success = $this->model_extension_modification->copyFile($file, $newfile, true);
+						if (!$success) {
+							$json['error'] = 'Could not copy <b>' . $file . '</b> to <b>' . $newfile . '</b>';
+							break;
+						}
+					}
+				}
+				if (!$json) $json['success'] = $this->language->get('text_generate_done');
+			}
+			$this->model_extension_modification->doFTP(false);
+		}
+		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
 	}
 
@@ -443,7 +550,7 @@ class ControllerExtensionVqmoderator extends Controller {
 					$ext = explode('.', $file);
 					$ext = array_pop($ext);
 					if (!$exts || in_array($ext, $exts)) $tree[] = $tfile;
-				} elseif (is_dir($file) && !in_array($tfile, $tree)) {
+				} elseif (is_dir($file) && !in_array($tfile . '/', $tree)) {
 					$tree[] = $tfile . '/';
 				}
 			}
@@ -458,7 +565,16 @@ class ControllerExtensionVqmoderator extends Controller {
 		$regex = isset($this->request->post['regex']);
 		if (strpos($file, '*') !== false) { // Check first file found (Maybe we can do better?)
 			$dirs = glob('../' . $file);
-			if ($dirs) $file = str_replace('../', '', $dirs[0]);
+			if ($dirs) {
+				// Get english dir for language wildcards (should always exist)
+				if (strpos($file, '/language/*/') && count($dirs) > 1) {
+					foreach ($dirs as $dir) {
+						if (strpos($dir, '/english/')) $file = str_replace('../', '', $dirs[0]);
+					}
+				} else {
+					$file = str_replace('../', '', $dirs[0]);
+				}
+			}
 		}
 		if ($file && $search && file_exists('../' . $file)) {
 			$tests = '../' . $this->config->get('vqmod_mod_test');

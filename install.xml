@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
@@ -268,8 +268,9 @@
 	
 		<operation>
 			<search trim="true"><![CDATA[$data['delete'] = ]]></search>
-			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add vQModerator menu link
+			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - TWO LINES - Add vQModerator menu link and generateAll mods link
 		$data['vqmoderator'] = $this->url->link('extension/vqmoderator', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$data['vqmod_generate'] = ($this->config->get('vqmod_mod_test')) ? $this->url->link('extension/vqmoderator/generateall', 'token=' . $this->session->data['token'] . $url, 'SSL') : false;
 // BOF - Zappo - vQModerator - ONE LINE - Clean up the Upload directory
 		if (isset($this->request->get['cleanup'])) $this->load->controller('extension/installer/clear', true);
 
@@ -278,12 +279,16 @@
 		$vqmver = $this->checkVQMod($check);
 		if (!$vqmver) {
 			$this->error['warning'] = sprintf($this->language->get('error_vqmod'), $this->url->link('extension/modification/vqmodinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'));
-		} elseif (isset($vqmver['update']) && $vqmver['update']) {
-			$data['text_refresh'] = sprintf($this->language->get('text_vqmod_update'), 'vQMod', implode('.', str_split($vqmver['vqnew'])), implode('.', str_split($vqmver['vqmod'])), $this->url->link('extension/modification/vqmodinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'), 'vQMod');
-		} elseif (isset($vqmver['updater']) && $vqmver['updater']) {
-			$data['text_refresh'] = sprintf($this->language->get('text_vqmod_update'), 'vQModerator', implode('.', str_split($vqmver['vqnewr'])), implode('.', str_split($vqmver['vqmodr'])), $this->url->link('extension/modification/vqmoderatorinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'), 'vQModerator');
-		} else {
-			if (isset($this->request->get['checkver'])) $data['text_refresh'] = $this->language->get('text_vqmod_newest');
+		} elseif (isset($this->error['update']) && $this->error['update'] == 'limit') {
+				$this->error['warning'] = $this->language->get('text_vqmod_limit');
+		} elseif ($this->config->get('vqmod_updates')) {
+			if (isset($vqmver['update']) && $vqmver['update']) {
+				$data['text_refresh'] = sprintf($this->language->get('text_vqmod_update'), 'vQMod', implode('.', str_split($vqmver['vqnew'])), implode('.', str_split($vqmver['vqmod'])), $this->url->link('extension/modification/vqmodinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'), 'vQMod');
+			} elseif (isset($vqmver['updater']) && $vqmver['updater']) {
+				$data['text_refresh'] = sprintf($this->language->get('text_vqmod_update'), 'vQModerator', implode('.', str_split($vqmver['vqnewr'])), implode('.', str_split($vqmver['vqmodr'])), $this->url->link('extension/modification/vqmoderatorinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'), 'vQModerator');
+			} else {
+				if (isset($this->request->get['checkver'])) $data['text_refresh'] = $this->language->get('text_vqmod_newest');
+			}
 		}
 // EOF - Zappo - vQModerator - Check vQMod installation, and if there are updates.]]></add>
 		</operation>
@@ -311,13 +316,15 @@
 	
 		<operation info="Just a comment, for completeness">
 			<search trim="true"><![CDATA[$data['text_refresh'] = $this->language->get('text_refresh');]]></search>
-			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - TWO LINES - Display vQMod update information instead, and added vQMod version]]></add>
+			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Display vQMod update information instead, added vQMod version, and added generate all mods]]></add>
 		</operation>
 	
 		<operation>
 			<search trim="true"><![CDATA[$data['text_refresh'] = $this->language->get('text_refresh');]]></search>
 			<add position="replace" trim="false"><![CDATA[if (!isset($data['text_refresh'])) $data['text_refresh'] = $this->language->get('text_refresh');
-		$data['text_vqmod_version'] = ($vqmver) ? sprintf($this->language->get('text_vqmod_version'), $this->url->link('extension/modification/', 'token=' . $this->session->data['token'] . $url . '&checkver=1', 'SSL'), implode('.', str_split($vqmver['vqmod'])), implode('.', str_split($vqmver['vqmodr']))) : '';]]></add>
+		if ($this->config->get('vqmod_mod_test')) $data['text_refresh'] .= $this->language->get('text_generate_text');
+		$data['text_vqmod_version'] = ($vqmver) ? sprintf($this->language->get('text_vqmod_version'), $this->url->link('extension/modification/', 'token=' . $this->session->data['token'] . $url . '&checkver=1', 'SSL'), implode('.', str_split($vqmver['vqmod'])), implode('.', str_split($vqmver['vqmodr']))) : '';
+// EOF - Zappo - vQModerator - Display vQMod update information instead, added vQMod version, and added generate all mods]]></add>
 		</operation>
 	
 		<operation>
@@ -328,6 +335,8 @@
 		$data['button_edit'] = $this->language->get('button_edit');
 		$data['column_type'] = $this->language->get('column_type');
 		$data['tooltip_type'] = $this->language->get('tooltip_type');
+		$data['text_generate_mods'] = $this->language->get('text_generate_mods');
+		$data['text_generate_fail'] = $this->language->get('text_generate_fail');
 // EOF - Zappo - vQModerator - Add vQModerator menu links]]></add>
 		</operation>
 	
@@ -353,23 +362,27 @@
 	
 		<operation>
 			<search trim="true"><![CDATA[return !$this->error]]></search>
-			<add position="after" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - Add functions
+			<add position="after" trim="false" offset="1"><![CDATA[
+// BOF - Zappo - vQModerator - Add functions
 	// Check vQMod installation, and see if its up to date every day
 	private function checkVQMod($interval = 24) {
 		if (!class_exists('VQMod')) {
 			return false;
 		}
+		$versions = array('vqmod' => 0, 'vqmodr' => 0, 'vqnew' => 0, 'vqnewr' => 0, 'update' => '', 'updater' => '', 'last' => '', 'lastr' => '');
 		// Get version from cache
-		$cache = DIR_CACHE . 'cache.vqmoderator';
-		if (file_exists($cache) && filemtime($cache) > strtotime('-' . $interval . ' Hours')) {
-			$versions = file_get_contents($cache);
-			$versions = unserialize($versions);
-			if (is_array($versions) && isset($versions['vqmod'])) {
+		$cache = DIR_CACHE . 'vqmoderator.cache';
+		if (file_exists($cache)) {
+			$cache_ver = file_get_contents($cache);
+			$cache_ver = unserialize($cache_ver);
+			if (is_array($cache_ver)) {
+				foreach ($cache_ver as $key => $value) $versions[$key] = $value;
+			}
+			if ($versions['vqmod'] && filemtime($cache) > strtotime('-' . $interval . ' Hours')) {
 				return $versions;
 			}
 		}
 		// Get versions, and put in cache
-		$versions = array('vqmod' => 0, 'vqmodr' => 0, 'vqnew' => 0, 'vqnewr' => 0, 'update' => '', 'updater' => '');
 		$handle = fopen(dirname(DIR_SYSTEM) . "/vqmod/vqmod.php", "r");
 		if ($handle) {
 			while (($line = fgets($handle)) !== false) {
@@ -380,14 +393,27 @@
 			}
 			fclose($handle);
 		}
-		$vqm_online = $this->checkVQModUpdate();
-		$versions['vqnew'] = $vqm_online['version'];
-		if ($versions['vqmod'] < $versions['vqnew']) $versions['update'] = $vqm_online['link'];
 		$versions['vqmodr'] = $this->model_extension_modification->getModificationByCode('vqmoderator');
 		$versions['vqmodr'] = filter_var($versions['vqmodr']['version'], FILTER_SANITIZE_NUMBER_INT);
-		$vqm_online = $this->checkVQModeratorUpdate();
-		$versions['vqnewr'] = $vqm_online['version'];
-		if ($versions['vqmodr'] < $versions['vqnewr']) $versions['updater'] = $vqm_online['link'];
+		// Get online versions
+		if ($this->config->get('vqmod_updates') || $interval == 0.01) {
+			$vqm_online = $this->checkVQModUpdate($versions['last']);
+			if (is_array($vqm_online)) {
+				$versions['vqnew'] = $vqm_online['version'];
+				$versions['last'] = $vqm_online['last'];
+				if ($versions['vqmod'] < $versions['vqnew']) $versions['update'] = $vqm_online['link'];
+			} elseif ($vqm_online == 'limit') {
+				$this->error['update'] = 'limit';
+			}
+			$vqm_online = $this->checkVQModeratorUpdate($versions['lastr']);
+			if (is_array($vqm_online)) {
+				$versions['vqnewr'] = $vqm_online['version'];
+				$versions['lastr'] = $vqm_online['last'];
+				if ($versions['vqmodr'] < $versions['vqnewr']) $versions['updater'] = $vqm_online['link'];
+			} elseif ($vqm_online == 'limit') {
+				$this->error['update'] = 'limit';
+			}
+		}
 		// Save versions to cache
 		if (!file_exists($cache) && touch($cache)) {
 			chmod($cache, 0777);
@@ -398,22 +424,37 @@
 	}
 
 	// Check for vQMod updates, and get update link
-	private function checkVQModUpdate() {
-		$result = array('version' => 0, 'link' => '');
+	private function checkVQModUpdate($last = '') {
+		$result = array('version' => 0, 'link' => '', 'last' => '');
 		$url = "https://api.github.com/repos/vqmod/vqmod/releases";
-		$ch = curl_init($url);
+		$ch = curl_init();
+		if ($last) curl_setopt($ch, CURLOPT_HTTPHEADER, array('If-None-Match: ' . $last));
+		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_USERAGENT, "test");
+		curl_setopt($ch, CURLOPT_USERAGENT, "vQModerator");
+		curl_setopt($ch, CURLOPT_HEADER, true);
 		$response = curl_exec($ch);
+		$errormsg  = curl_error( $ch );
 		curl_close($ch);
+		if ($errormsg) return $errormsg;
 
-		$response = json_decode($response, true);
-		foreach ($response as $rel) {
-			if (strpos($rel['name'], 'opencart')) {
-				$ver = str_replace('-', '', filter_var($rel['name'], FILTER_SANITIZE_NUMBER_INT));
-				if ($ver > $result['version']) {
-					$result['version'] = $ver;
-					$result['link'] = $rel['assets'][0]['browser_download_url'];
+		list($header, $body) = explode("\r\n\r\n", $response, 2);
+		$header = $this->get_curl_headers($header);
+		$result['last'] = $header['ETag'];
+		if ($header['Status'] == '304 Not Modified') {
+			return 'same';
+		} else {
+			$response = json_decode($body, true);
+			foreach ($response as $rel) {
+				if (!isset($rel['name'])) {
+					return 'limit';
+				}
+				if (strpos($rel['name'], 'opencart')) {
+					$ver = str_replace('-', '', filter_var($rel['name'], FILTER_SANITIZE_NUMBER_INT));
+					if ($ver > $result['version']) {
+						$result['version'] = $ver;
+						$result['link'] = $rel['assets'][0]['browser_download_url'];
+					}
 				}
 			}
 		}
@@ -428,22 +469,26 @@
 			$step = $this->request->get['step'];
 			if ($step == 0) {
 				// Download vQMod
-				$vqmod = $this->checkVQModUpdate();
-				$options = array(
-					CURLOPT_RETURNTRANSFER => true,     // return web page
-					CURLOPT_HEADER         => false,    // don't return headers
-					CURLOPT_FOLLOWLOCATION => true,     // follow redirects
-					CURLOPT_USERAGENT      => "spider", // who am i
-					CURLOPT_AUTOREFERER    => true,     // set referer on redirect
-					CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
-					CURLOPT_TIMEOUT        => 120,      // timeout on response
-					CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
-				);
-				$ch      = curl_init( $vqmod['link'] );
-				curl_setopt_array( $ch, $options );
-				$content = curl_exec( $ch );
-				$errmsg  = curl_error( $ch );
-				curl_close($ch);
+				$vqmod = $this->checkVQMod();
+				if (is_array($vqmod) && $vqmod['update']) {
+					$options = array(
+						CURLOPT_RETURNTRANSFER => true,     // return web page
+						CURLOPT_HEADER         => false,    // don't return headers
+						CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+						CURLOPT_USERAGENT      => "vQModerator", // who am i
+						CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+						CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+						CURLOPT_TIMEOUT        => 120,      // timeout on response
+						CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+					);
+					$ch      = curl_init( $vqmod['update'] );
+					curl_setopt_array( $ch, $options );
+					$content = curl_exec( $ch );
+					$errmsg  = curl_error( $ch );
+					curl_close($ch);
+				} else {
+					$errmsg = $this->language->get('error_vqmod_url');
+				}
 				if ($errmsg) {
 					$json['error'] = $errmsg;
 				} else {
@@ -547,7 +592,7 @@
 				else $json['error'] = $this->language->get('error_vqmod_empty'); // not writeable
 				$this->model_extension_modification->setPermission(dirname(DIR_SYSTEM) . '/vqmod');
 				$this->model_extension_modification->setPermission(dirname(DIR_SYSTEM) . '/vqmod/vqcache');
-				$this->model_extension_modification->deleteFile(DIR_CACHE . 'cache.vqmoderator');
+				$this->model_extension_modification->deleteFile(DIR_CACHE . 'vqmoderator.cache');
 				$this->model_extension_modification->doFTP(false);
 			}
 		} else {
@@ -557,22 +602,37 @@
 	}
 
 	// Check for vQModerator updates, and get update link
-	private function checkVQModeratorUpdate() {
-		$result = array('version' => 0, 'link' => '');
+	private function checkVQModeratorUpdate($last = '') {
+		$result = array('version' => 0, 'link' => '', 'last' => '');
 		$url = "https://api.github.com/repos/AvanOsch/vQModerator/releases";
-		$ch = curl_init($url);
+		$ch = curl_init();
+		if ($last) curl_setopt($ch, CURLOPT_HTTPHEADER, array('If-None-Match: ' . $last));
+		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_USERAGENT, "test");
+		curl_setopt($ch, CURLOPT_USERAGENT, "vQModerator");
+		curl_setopt($ch, CURLOPT_HEADER, true);
 		$response = curl_exec($ch);
+		$errormsg  = curl_error( $ch );
 		curl_close($ch);
+		if ($errormsg) return $errormsg;
 
-		$response = json_decode($response, true);
-		foreach ($response as $rel) {
-			if (strpos($rel['name'], 'vQModerator') !== false) {
-				$ver = str_replace('-', '', filter_var($rel['name'], FILTER_SANITIZE_NUMBER_INT));
-				if ($ver > $result['version']) {
-					$result['version'] = $ver;
-					$result['link'] = $rel['assets'][0]['browser_download_url'];
+		list($header, $body) = explode("\r\n\r\n", $response, 2);
+		$header = $this->get_curl_headers($header);
+		$result['last'] = $header['ETag'];
+		if ($header['Status'] == '304 Not Modified') {
+			return 'same';
+		} else {
+			$response = json_decode($body, true);
+			foreach ($response as $rel) {
+				if (!isset($rel['name'])) {
+					return 'limit';
+				}
+				if (strpos($rel['name'], 'vQModerator') !== false) {
+					$ver = str_replace('-', '', filter_var($rel['name'], FILTER_SANITIZE_NUMBER_INT));
+					if ($ver > $result['version']) {
+						$result['version'] = $ver;
+						$result['link'] = $rel['assets'][0]['browser_download_url'];
+					}
 				}
 			}
 		}
@@ -587,22 +647,26 @@
 			$step = $this->request->get['step'];
 			if ($step == 0) {
 				// Download vQMod
-				$vqmod = $this->checkVQModeratorUpdate();
-				$options = array(
-					CURLOPT_RETURNTRANSFER => true,     // return web page
-					CURLOPT_HEADER         => false,    // don't return headers
-					CURLOPT_FOLLOWLOCATION => true,     // follow redirects
-					CURLOPT_USERAGENT      => "spider", // who am i
-					CURLOPT_AUTOREFERER    => true,     // set referer on redirect
-					CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
-					CURLOPT_TIMEOUT        => 120,      // timeout on response
-					CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
-				);
-				$ch      = curl_init( $vqmod['link'] );
-				curl_setopt_array( $ch, $options );
-				$content = curl_exec( $ch );
-				$errmsg  = curl_error( $ch );
-				curl_close($ch);
+				$vqmod = $this->checkVQMod();
+				if (is_array($vqmod) && $vqmod['updater']) {
+					$options = array(
+						CURLOPT_RETURNTRANSFER => true,     // return web page
+						CURLOPT_HEADER         => false,    // don't return headers
+						CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+						CURLOPT_USERAGENT      => "vQModerator", // who am i
+						CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+						CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+						CURLOPT_TIMEOUT        => 120,      // timeout on response
+						CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+					);
+					$ch      = curl_init( $vqmod['updater'] );
+					curl_setopt_array( $ch, $options );
+					$content = curl_exec( $ch );
+					$errmsg  = curl_error( $ch );
+					curl_close($ch);
+				} else {
+					$errmsg = $this->language->get('error_vqmod_url');
+				}
 				if ($errmsg) {
 					$json['error'] = $errmsg;
 				} else {
@@ -724,7 +788,7 @@
 				}
 				if ($success) {
 					$json['success'] = sprintf($this->language->get('text_vqmod_upgrade'), 'vQModerator'); // updrade complete
-					$this->model_extension_modification->deleteFile(DIR_CACHE . 'cache.vqmoderator');
+					$this->model_extension_modification->deleteFile(DIR_CACHE . 'vqmoderator.cache');
 				} else {
 					$json['error'] = $this->language->get('error_install');
 				}
@@ -734,6 +798,19 @@
 			$json['error'] = $this->language->get('error_permission');
 		}
 		$this->response->setOutput(json_encode($json));
+	}
+
+	function get_curl_headers($header) {
+		$headers = array();
+		foreach (explode("\r\n", $header) as $i => $line) {
+			if ($i === 0) {
+				$headers['http_code'] = $line;
+			} else {
+				list($key, $value) = explode(': ', $line);
+				$headers[$key] = $value;
+			}
+		}
+		return $headers;
 	}
 // EOF - Zappo - vQModerator - Add functions]]></add>
 		</operation>
@@ -759,12 +836,13 @@
 	
 		<operation>
 			<search trim="true"><![CDATA[$_['text_list']]]></search>
-			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Add vQMod Install messages
+			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add vQMod Install messages
 $_['text_vqmod_version'] = '<a href="%s" data-toggle="tooltip" title="Check for updates now!"><i class="fa fa-check"></i>&nbsp; vQMod v%s <i class="fa fa-check"></i>&nbsp; vQModerator v%s installed</a>';
 $_['text_vqmod_newest'] = 'Whoohoo! You have the latest versions of vQMod and vQModerator installed! &nbsp; <i class="fa fa-hand-spock-o"></i>';
+$_['text_vqmod_limit']  = 'The Github server has received too many requests! Please try again after an hour!';
 $_['text_vqmod_update'] = '%s Version %s has been released! <small>(version %s is installed)</small> &nbsp; &nbsp; '.
 		'<a href="%s" class="btn btn-default install-btn" onclick="install($(this).prop(\'href\')); return false;"><i class="fa fa-lg fa-cog"></i>&nbsp; Download now</a>'.
-		'<div id="install-msg"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Downloading %s</div>';
+		'<div id="install-msg"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Downloading %s</div>&nbsp;';
 $_['text_downloaded']   = '<div data-href="%s" id="redirect-me" data-time="3"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; UnZipping %s</div>';
 $_['text_unzipped']     = 'Do you want vQMod to write in the same Log file as OCMod, or just use default vQMod Log files? &nbsp; '.
 		'<input type="radio" value="1" class="dolog"> OCMod file &nbsp; <input type="radio" value="0" class="dolog"> Default files &nbsp; &nbsp; '.
@@ -776,7 +854,13 @@ $_['text_copied']        = '<div data-href="%s" id="redirect-me" data-time="3"><
 $_['text_vqmod_upgrade'] = 'Success! %s is upgraded!';
 $_['text_vqmod_already'] = 'vQMod is already installed!';
 $_['text_vqmod_install'] = 'Success! vQMod is installed!';
-// EOF - Zappo - vQModerator - ONE LINE - Add vQMod Install messages]]></add>
+// EOF - Zappo - vQModerator - Add vQMod Install messages
+// BOF - Zappo - vQModerator - Generate all mods messages
+$_['text_generate_mods'] = 'Click to Generate all enabled modifications<br/>The new files will be put in your OpenCarts Test folder';
+$_['text_generate_done'] = "Done!\nThe new files are in your OpenCarts Test folder";
+$_['text_generate_fail'] = 'Something went wrong while generating modifications...';
+$_['text_generate_text'] = '&nbsp; &nbsp; - Press <b>Ctrl</b> and <b>click</b> to generate all modifications! -';
+// EOF - Zappo - vQModerator - Generate all mods messages]]></add>
 		</operation>
 	
 		<operation>
@@ -789,6 +873,7 @@ $_['tooltip_type']      = 'Modification Type<br/>vQMods show vQMod version<br/>v
 		<operation>
 			<search trim="true"><![CDATA[$_['error_permission']]]></search>
 			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add vQMod Install warnings
+$_['error_vqmod_url']   = 'Warning: Could not find update url!';
 $_['error_vqmod']       = 'Warning: vQMod is not installed! vQMods will not work without it! &nbsp; &nbsp; '.
 		'<a href="%s" class="btn btn-default install-btn" onclick="install($(this).prop(\'href\')); return false;"><i class="fa fa-lg fa-cog"></i>&nbsp; Download now</a>'.
 		'<div id="install-msg"><i class="fa fa-lg fa-cog fa-spin"></i> &nbsp; Downloading vQMod</div>';
@@ -839,7 +924,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 				$newfiles = (isset($newfiles)) ? serialize($newfiles) : '';
 				$sql = html_entity_decode($data['mod_sql']);
 				$php = html_entity_decode($data['mod_php']);
-				$this->db->query("INSERT INTO " . DB_PREFIX . "modification_files SET modification_id = '" . (int)$modification_id . "', files = '" . $this->db->escape($files) . "', newfiles = '" . $this->db->escape($newfiles) . "', install_sql = '" . $sql . "', install_php = '" . $php . "'");
+				$this->db->query("INSERT INTO " . DB_PREFIX . "modification_files SET modification_id = '" . (int)$modification_id . "', files = '" . $this->db->escape($files) . "', newfiles = '" . $this->db->escape($newfiles) . "', install_sql = '" . $this->db->escape($sql) . "', install_php = '" . $this->db->escape($php) . "'");
 			}
 		} else { // Add mod from installer
 			$path = DIR_UPLOAD . str_replace(array('../', '..\\', '..'), '', $data['path']);
@@ -873,9 +958,9 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 			$php = html_entity_decode($data['mod_php']);
 			$result = $this->db->query("SELECT modification_id FROM " . DB_PREFIX . "modification_files WHERE modification_id = '" . (int)$data['modification_id'] . "'");
 			if ($result->num_rows) {
-				$result = $this->db->query("UPDATE " . DB_PREFIX . "modification_files SET files = '" . $this->db->escape($files) . "', newfiles = '" . $this->db->escape($newfiles) . "', install_sql = '" . $sql . "', install_php = '" . $php . "' WHERE modification_id = '" . (int)$data['modification_id'] . "'");
+				$result = $this->db->query("UPDATE " . DB_PREFIX . "modification_files SET files = '" . $this->db->escape($files) . "', newfiles = '" . $this->db->escape($newfiles) . "', install_sql = '" . $this->db->escape($sql) . "', install_php = '" . $this->db->escape($php) . "' WHERE modification_id = '" . (int)$data['modification_id'] . "'");
 			} else {
-				$result = $this->db->query("INSERT INTO " . DB_PREFIX . "modification_files SET modification_id = '" . (int)$data['modification_id'] . "', files = '" . $this->db->escape($files) . "', newfiles = '" . $this->db->escape($newfiles) . "', install_sql = '" . $sql . "', install_php = '" . $php . "'");
+				$result = $this->db->query("INSERT INTO " . DB_PREFIX . "modification_files SET modification_id = '" . (int)$data['modification_id'] . "', files = '" . $this->db->escape($files) . "', newfiles = '" . $this->db->escape($newfiles) . "', install_sql = '" . $this->db->escape($sql) . "', install_php = '" . $this->db->escape($php) . "'");
 			}
 		}
 		return $result;
@@ -956,15 +1041,13 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 					if (!$query->row['name']) $query->row['name'] = str_replace(array('.vqmod.xml','.ocmod.xml','.xml'), '', $query->row['xml']);
 					if (!$query->row['code']) $query->row['code'] = str_replace(array('.vqmod.xml','.ocmod.xml','.xml'), '', $query->row['xml']);
 					$query->row['type'] = (substr(strtolower($query->row['xml']), -10) == '.ocmod.xml') ? 'OCMod' : 'vQMod';
-					$query->row['xml'] = '"<modification><file><operation></operation></file></modification>"';
 					$query->row['status'] = 0;
 					// Disable file, because error occured
 					if (substr($file, -4) == '.xml') {
-						$this->disableModification($modification_id); // returns false when failed
+						$this->disableModification($modification_id);
 					}
 				} else {
 					$query->row['type'] = ((!isset($xml->vqmver) && !isset($xml->id)) || substr(strtolower($query->row['xml']), -10) == '.ocmod.xml') ? 'OCMod' : 'vQMod';
-					$query->row['xml'] = file_get_contents($file);
 				}
 			}
 		}
@@ -978,39 +1061,39 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - Add vQMods to list
 		// Look for, and add new mod files to database
 		if (isset($data['vqmod']) && $data['vqmod']) {
-      // Get version from cache
-      $cache = DIR_CACHE . 'cache.vqmoderator';
-      if (file_exists($cache)) {
-        $versions = unserialize(file_get_contents($cache));
-        if (is_array($versions) && isset($versions['vqmod'])) $vqmver = $versions['vqmod'];
-      } else {
-        $vqmver = 0;
-      }
-      $use_errors = libxml_use_internal_errors(true); // Save error setting
-      $modfiles = array();
-      foreach ($query->rows as $id => $qry) {
-        if (substr($qry['xml'], -4) == '.xml') {
-          $file = dirname(DIR_SYSTEM) . '/' . $qry['xml'];
-          // Check for disabled file
-          if (!file_exists($file)) $file = $file . '_';
-          if (file_exists($file)) {
-            $query->rows[$id]['xml'] = file_get_contents($file);
-            $xml = simplexml_load_file($file);
-          } else {
-            // File not found... Delete from database, and continue
-            $this->deleteModification($qry['modification_id']);
-            continue;
-          }
-          $modfiles[] = $qry['xml'];
-        } else {
-          $xml = simplexml_load_string($qry['xml']);
-        }
-        $query->rows[$id]['type'] = ((!isset($xml->vqmver) && !isset($xml->id)) || substr($qry['xml'], -10) == '.ocmod.xml') ? 'OCMod' : 'vQMod';
-        if (isset($xml->vqmver)) {
-          $required = (isset($xml->vqmver['required']) && (int)filter_var($xml->vqmver, FILTER_SANITIZE_NUMBER_INT) > $vqmver) ? 'color:red;' : '';
-          $query->rows[$id]['type'] .= ($required ? '<span data-toggle="tooltip" title="Required vQMod version">' : '') . '<small style="float:right;' . $required . '">' . (isset($xml->vqmver['required']) ? '* ' : '') . 'v.' . (string)$xml->vqmver . '</small>' . ($required ? '</span>' : '');
-        }
-      }
+			// Get version from cache
+			$cache = DIR_CACHE . 'vqmoderator.cache';
+			if (file_exists($cache)) {
+				$versions = unserialize(file_get_contents($cache));
+				if (is_array($versions) && isset($versions['vqmod'])) $vqmver = $versions['vqmod'];
+			} else {
+				$vqmver = 0;
+			}
+			$use_errors = libxml_use_internal_errors(true); // Save error setting
+			$modfiles = array();
+			foreach ($query->rows as $id => $qry) {
+				if (substr($qry['xml'], -4) == '.xml') {
+					$file = dirname(DIR_SYSTEM) . '/' . $qry['xml'];
+					// Check for disabled file
+					if (!file_exists($file)) $file = $file . '_';
+					if (file_exists($file)) {
+						$query->rows[$id]['xml'] = file_get_contents($file);
+						$xml = simplexml_load_file($file);
+					} else {
+						// File not found... Delete from database, and continue
+						$this->deleteModification($qry['modification_id']);
+						continue;
+					}
+					$modfiles[] = $qry['xml'];
+				} else {
+					$xml = simplexml_load_string($qry['xml']);
+				}
+				$query->rows[$id]['type'] = ((!isset($xml->vqmver) && !isset($xml->id)) || substr($qry['xml'], -10) == '.ocmod.xml') ? 'OCMod' : 'vQMod';
+				if (isset($xml->vqmver)) {
+					$required = (isset($xml->vqmver['required']) && (int)filter_var($xml->vqmver, FILTER_SANITIZE_NUMBER_INT) > $vqmver) ? 'color:red;' : '';
+					$query->rows[$id]['type'] .= ($required ? '<span data-toggle="tooltip" title="Required vQMod version">' : '') . '<small style="float:right;' . $required . '">' . (isset($xml->vqmver['required']) ? '* ' : '') . 'v.' . (string)$xml->vqmver . '</small>' . ($required ? '</span>' : '');
+				}
+			}
 			$files = glob(DIR_SYSTEM.'*.{ocmod,vqmod}.xml',GLOB_BRACE);
 			$path = dirname(DIR_SYSTEM) . '/vqmod/xml';
 			$allfiles = is_dir($path) ? glob($path . '/*.xml*') : array();
@@ -1065,53 +1148,11 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 	
 		<operation>
 			<search index="1" trim="true"><![CDATA[return $query->row;]]></search>
-			<add position="after" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - Add funtions
+			<add position="after" trim="false" offset="1"><![CDATA[
+// BOF - Zappo - vQModerator - Add funtions
 	public function getModFiles($modification_id) {
 		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification_files WHERE modification_id = '" . $modification_id . "'");
 		return $query->row;
-	}
-
-	public function generateAll() {
-		$files = array();
-		$use_errors = libxml_use_internal_errors(true); // Save error setting
-		$xml_dir = dirname(DIR_SYSTEM) . '/vqmod/xml/';
-		$dirfiles = glob($xml_dir . '*.xml');
-		foreach ($dirfiles as $path) {
-			$file = str_replace($xml_dir, '', $path);
-			if ($file != 'vqmod_opencart.xml') {
-				$xml = simplexml_load_file($path);
-				libxml_clear_errors();
-				if (isset($xml->file)) {
-					foreach ($xml->file as $file) {
-						$thefiles = explode(',', $file['name']);
-						foreach ($thefiles as $filename) {
-							$filename = (isset($file['path']) ? $file['path'] : '') . trim($filename);
-							if (!in_array($filename, $files)) $files[] = $filename;
-						}
-					}
-				}
-			}
-		}
-		libxml_use_internal_errors($use_errors); // Reset error setting
-
-		$success = false;
-		if ($files) {
-			$dirfiles = glob(dirname(DIR_SYSTEM) . '/' . VQMod::$vqCachePath . '*');
-			$this->deleteFiles($dirfiles);
-			$tests = $this->config->get('vqmod_mod_test');
-			foreach ($files as $file) {
-				$genfiles = glob('../' . $file);
-				foreach ($genfiles as $file) {
-					$file = str_replace('../', '', $file);
-					$genfile = VQMod::modcheck($file);
-					if (is_file($genfile)) {
-						$newfile = $tests . $this->config->get('test_vqmod') . '/' . $file;
-						$success = $this->createFile($newfile); // Pre-create file, to also get dirs in place
-						if ($success) $this->renameFile($genfile, $newfile);
-					}
-				}
-			}
-		}
 	}
 
 	public function doFTP($con = true) {
@@ -1172,7 +1213,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 		return $perms;
 	}
 
-	public function renameFile($old, $new) {
+	public function renameFile($old, $new, $keepftp = false) {
 		$renamed = false;
 		if (file_exists($old)) {
 			$time = filemtime($old);
@@ -1200,11 +1241,11 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 				if ($time && is_writable($new)) touch($new, $time); // Set Original Modification time back
 			}
 		}
-		$this->doFTP(false);
+		if (!$keepftp) $this->doFTP(false);
 		return $renamed;
 	}
 
-	public function copyFile($from, $to) {
+	public function copyFile($from, $to, $keepftp = false) {
 		$copied = false;
 		if (file_exists($from)) {
 			$time = filemtime($from);
@@ -1232,31 +1273,37 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 				if ($time && is_writable($to)) touch($to, $time); // Set Original Modification time back
 			}
 		}
-		$this->doFTP(false);
+		if (!$keepftp) $this->doFTP(false);
 		return $copied;
 	}
 
-	public function deleteFiles($files = array()) {
+	public function deleteFiles($files = array(), $keepftp = false) {
 		$success = true;
 		if (!empty($files)) {
 			foreach ($files as $file) {
-				$success = ($success) ? $this->deleteFile($file) : false;
+				$success = ($success) ? $this->deleteFile($file, true) : false;
+				//if (!$success) echo "Failed del file: $file\n";
 			}
 		}
-		$this->doFTP(false);
+		if (!$keepftp) $this->doFTP(false);
 		return $success;
 	}
 
-	public function deleteFile($file) {
+	public function deleteFile($file, $keepftp = false) {
 		if (!file_exists($file)) return true;
 		if ($this->config->get('config_ftp_status')) {
 			if (!$this->ftp_connection) $this->doFTP();
 
 			if ($this->ftp_connection && $this->ftp_root) {
-				$file = str_replace(array($this->ftp_root, '../'), '', $file);
-				if (is_dir($file)) return ftp_rmdir($this->ftp_connection, $file);
-				return ftp_delete($this->ftp_connection, $file);
+				$file = (strpos($file, '../../') !== false) ? dirname(dirname(DIR_SYSTEM)) . str_replace('../..', '', $file) : str_replace(array($this->ftp_root, '../'), '', $file);
+				if (is_dir($file)) {
+					$success = ftp_rmdir($this->ftp_connection, $file);
+				} else {
+					$success = ftp_delete($this->ftp_connection, $file);
+				}
 			}
+			if (!$keepftp) $this->doFTP(false);
+			return $success;
 		} else {
 			if (is_dir($file)) return rmdir($file);
 			return unlink($file);
@@ -1325,8 +1372,37 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 	
 		<operation>
 			<search trim="true"><![CDATA[$footer]]></search>
-			<add position="before" trim="false"><![CDATA[<style>
-  #install-msg { display:none; }
+			<add position="before" trim="false"><![CDATA[<div id="vqgenerate"><?php echo $text_generate_mods;?></div>
+<div id="vqloading"><i class="fa fa-5x fa-refresh fa-spin" style="position:fixed;top:40%;"></i></div>
+<style>
+#install-msg { display:none; }
+#vqgenerate {
+    display:none;
+	position:absolute;
+    background-color:#D9EEF9;
+	border:2px solid #BAEAF4;
+    -webkit-border-radius:7px 7px 7px 7px;
+    -moz-border-radius:7px 7px 7px 7px;
+    -khtml-border-radius:7px 7px 7px 7px;
+    border-radius:7px 7px 7px 7px;
+    -webkit-box-shadow:7px 7px 7px #BBB;
+    -moz-box-shadow:7px 7px 7px #BBB;
+    box-shadow:7px 7px 7px #BBB;
+    padding: 10px 10px 10px 60px;
+    cursor: pointer;
+}
+#vqloading {
+    display:none;
+	opacity:0.7;
+    background-color:#fff;
+    position:fixed;
+    width:100%;
+    height:100%;
+    top:0px;
+    left:0px;
+	text-align:center;
+    z-index:1001;
+}
 </style>
 <script type='text/javascript'>
 var installing = false;
@@ -1382,7 +1458,50 @@ function install(url) {
     }
   });
 }
+<?php if ($vqmod_generate) { ?>
+// Press shift to generate vQModifications
+$(document).keydown(function(e) {
+	if (e.ctrlKey) {
+		var div = $('#vqgenerate');
+		div.fadeIn();
+		$(document).mousemove(function(ev) {
+			div.css({
+			   left:  ev.pageX -28,
+			   top:   ev.pageY -25
+			});
+		});
+	}
+}).keyup(function() {
+	$('#vqgenerate').fadeOut(function(){
+		$(document).unbind("mousemove");
+	});
+});
+$('#vqgenerate').click(function() {
+	$(document).unbind("keydown");
+	$('#vqgenerate').hide();
+	$('#vqloading').fadeIn();
+	$.ajax({
+		url: '<?php echo html_entity_decode($vqmod_generate);?>',
+		success: function(json) {
+			if (json['error']) {
+				alert(json['error']);
+			} else if (json['success']) {
+				alert(json['success']);
+			} else {
+				alert('<?php echo $text_generate_fail;?>');
+			}
+		},
+		complete: function() {
+			$('#vqloading').fadeOut('slow');
+		},
+        error: function(xhr, ajaxOptions, thrownError) {
+          alert(thrownError);
+        }
+	});
+});
+<?php } ?>
 </script>]]></add>
 		</operation>
 	</file>
+
 </modification>
