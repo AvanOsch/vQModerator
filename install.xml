@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.4</version>
+	<version>1.0.5</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
@@ -218,6 +218,13 @@
 			<add position="replace" trim="false"><![CDATA[DIR_MODIFICATION . '*', dirname(DIR_SYSTEM) . '/vqmod/vqcache/*']]></add>
 		</operation>
 	
+		<operation>
+			<search trim="true"><![CDATA[rsort($files);]]></search>
+			<add position="after" trim="false"><![CDATA[// BOF - Zappo - vQModerator - TWO LINES - Add vQMod Support (also delete vqmod cache files)
+			$files[] = '../vqmod/checked.cache'; // Clear vQMod checked files
+			$files[] = '../vqmod/mods.cache'; // Clear vQMod checked files]]></add>
+		</operation>
+	
 		<operation info="Just a comment, for completeness">
 			<search trim="true"><![CDATA[($result['status']]]></search>
 			<add position="before" trim="false"><![CDATA[// BOF - Zappo - vQModerator - ONE LINE - Remove vQMod files from list]]></add>
@@ -362,11 +369,10 @@
 	
 		<operation>
 			<search trim="true"><![CDATA[return !$this->error]]></search>
-			<add position="after" trim="false" offset="1"><![CDATA[
-// BOF - Zappo - vQModerator - Add functions
+			<add position="after" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - Add functions
 	// Check vQMod installation, and see if its up to date every day
 	private function checkVQMod($interval = 24) {
-		if (!class_exists('VQMod')) {
+		if (!class_exists('VQMod') && $interval !== 0) {
 			return false;
 		}
 		$versions = array('vqmod' => 0, 'vqmodr' => 0, 'vqnew' => 0, 'vqnewr' => 0, 'update' => '', 'updater' => '', 'last' => '', 'lastr' => '');
@@ -396,7 +402,7 @@
 		$versions['vqmodr'] = $this->model_extension_modification->getModificationByCode('vqmoderator');
 		$versions['vqmodr'] = filter_var($versions['vqmodr']['version'], FILTER_SANITIZE_NUMBER_INT);
 		// Get online versions
-		if ($this->config->get('vqmod_updates') || $interval == 0.01) {
+		if ($this->config->get('vqmod_updates') || $interval <= 0.01) {
 			$vqm_online = $this->checkVQModUpdate($versions['last']);
 			if (is_array($vqm_online)) {
 				$versions['vqnew'] = $vqm_online['version'];
@@ -469,7 +475,7 @@
 			$step = $this->request->get['step'];
 			if ($step == 0) {
 				// Download vQMod
-				$vqmod = $this->checkVQMod();
+				$vqmod = $this->checkVQMod(0);
 				if (is_array($vqmod) && $vqmod['update']) {
 					$options = array(
 						CURLOPT_RETURNTRANSFER => true,     // return web page
@@ -647,7 +653,7 @@
 			$step = $this->request->get['step'];
 			if ($step == 0) {
 				// Download vQMod
-				$vqmod = $this->checkVQMod();
+				$vqmod = $this->checkVQMod(0);
 				if (is_array($vqmod) && $vqmod['updater']) {
 					$options = array(
 						CURLOPT_RETURNTRANSFER => true,     // return web page
@@ -1148,8 +1154,7 @@ $_['error_install']     = 'Warning: Could not Install vQModerator! Please <a hre
 	
 		<operation>
 			<search index="1" trim="true"><![CDATA[return $query->row;]]></search>
-			<add position="after" trim="false" offset="1"><![CDATA[
-// BOF - Zappo - vQModerator - Add funtions
+			<add position="after" trim="false" offset="1"><![CDATA[// BOF - Zappo - vQModerator - Add funtions
 	public function getModFiles($modification_id) {
 		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "modification_files WHERE modification_id = '" . $modification_id . "'");
 		return $query->row;

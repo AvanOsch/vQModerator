@@ -455,14 +455,17 @@ class ControllerExtensionVqmoderator extends Controller {
 				foreach ($files as $file) {
 					$genfiles = glob('../' . $file);
 					foreach ($genfiles as $file) {
-						$file = str_replace('../', '', $file);
-						$genfile = VQMod::modcheck($file);
-						if (is_file($genfile)) {
-							$newfile = $tests . 'modded/' . $file;
-							$success = $this->model_extension_modification->copyFile($genfile, $newfile, true);
-							if (!$success) {
-								$json['error'] = 'Could not copy <b>' . $genfile . '</b> to <b>' . $newfile . '</b>';
-								break 2;
+						if (is_file($file)) {
+							$file = str_replace('../', '', $file);
+							$getfile = (file_exists(DIR_MODIFICATION . $file) ? DIR_MODIFICATION : '') . $file;
+							$genfile = VQMod::modcheck($getfile, $file);
+							if (is_file($genfile)) {
+								$newfile = $tests . 'modded/' . $file;
+								$success = $this->model_extension_modification->copyFile($genfile, $newfile, true);
+								if (!$success) {
+									$json['error'] = 'Could not copy <b>' . $genfile . '</b> to <b>' . $newfile . '</b>';
+									break 2;
+								}
 							}
 						}
 					}
@@ -470,6 +473,7 @@ class ControllerExtensionVqmoderator extends Controller {
 			}
 			// Copy OCMod files to test folder (if not already there)
 			if ($success) {
+				$files = array();
 				$path = array(DIR_MODIFICATION . '*');
 				while (count($path) != 0) {
 					$next = array_shift($path);
@@ -477,15 +481,15 @@ class ControllerExtensionVqmoderator extends Controller {
 						if (is_dir($file)) {
 							$path[] = $file . '/*';
 						} else {
-							$ofiles[] = $file;
+							$files[] = $file;
 						}
 					}
 				}
-				rsort($ofiles);
+				rsort($files);
 				// Copy all modification files
-				foreach ($ofiles as $file) {
+				foreach ($files as $file) {
 					$newfile = str_replace(DIR_MODIFICATION, $tests . 'modded/', $file);
-					if ($file != DIR_MODIFICATION . 'index.html' && !file_exists($newfile) && is_file($file)) {
+					if ($file != DIR_MODIFICATION . 'index.html' && !file_exists('../' . $newfile) && is_file($file)) {
 						$success = $this->model_extension_modification->copyFile($file, $newfile, true);
 						if (!$success) {
 							$json['error'] = 'Could not copy <b>' . $file . '</b> to <b>' . $newfile . '</b>';
@@ -564,21 +568,16 @@ class ControllerExtensionVqmoderator extends Controller {
 		$search = (isset($this->request->post['search'])) ? htmlspecialchars_decode($this->request->post['search']) : false;
 		$regex = isset($this->request->post['regex']);
 		if (strpos($file, '*') !== false) { // Check first file found (Maybe we can do better?)
+			// Get english dir for language wildcards (should always exist)
+			if (strpos($file, '/language/*/')) $file = str_replace('/language/*/', '/language/english/', $file);
 			$dirs = glob('../' . $file);
 			if ($dirs) {
-				// Get english dir for language wildcards (should always exist)
-				if (strpos($file, '/language/*/') && count($dirs) > 1) {
-					foreach ($dirs as $dir) {
-						if (strpos($dir, '/english/')) $file = str_replace('../', '', $dirs[0]);
-					}
-				} else {
-					$file = str_replace('../', '', $dirs[0]);
-				}
+				$file = str_replace('../', '', $dirs[0]);
 			}
 		}
 		if ($file && $search && file_exists('../' . $file)) {
 			$tests = '../' . $this->config->get('vqmod_mod_test');
-			if (file_exists($tests) && is_dir($tests)) {
+			if ($this->config->get('vqmod_mod_test') && file_exists($tests) && is_dir($tests)) {
 				$dirfiles = glob($tests . '*');
 				if (!$dirfiles) $dirfiles = array();
 				foreach ($dirfiles as $path) {
@@ -599,7 +598,7 @@ class ControllerExtensionVqmoderator extends Controller {
 			$file = file_get_contents('../' . $file);
 			if ($regex) $count = preg_match($search, $file);
 			else $count = substr_count($file, $search);
-			if (file_exists($tests) && is_dir($tests)) $found['Installed'] = $count;
+			if ($this->config->get('vqmod_mod_test') && file_exists($tests) && is_dir($tests)) $found['Installed'] = $count;
 			else $found['Result'] = $count;
 		}
 		$this->response->setOutput(json_encode($found));
@@ -678,6 +677,8 @@ class ControllerExtensionVqmoderator extends Controller {
 			} else {
 				if (substr($mod['xml'], -4) == '.xml') {
 					$xmlfile = dirname(DIR_SYSTEM) . '/' . $mod['xml'];
+					if (!file_exists($xmlfile) && file_exists($xmlfile . '_')) $xmlfile .= '_';
+					$type = 'vqmod';
 				} else {
 					$xml = simplexml_load_string($mod['xml']);
 					$type = (isset($xml->vqmver) || isset($xml->id)) ? 'vqmod' : 'ocmod';

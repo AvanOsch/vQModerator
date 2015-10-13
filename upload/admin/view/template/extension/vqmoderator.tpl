@@ -224,7 +224,7 @@
 
   function readMod(xml) {
     if ($(xml).find("modification").length > 1) {
-      var html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_modification; ?> <button type="button" class="close" data-dismiss="alert">&times;</button> </div>'
+      var html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_modification; ?> <button type="button" class="close" data-dismiss="alert">&times;</button> </div>';
       $(".errors").prepend(html);
     }
 
@@ -243,14 +243,14 @@
         addOperation(el, this, false);
       });
     });
-		if (typeof autoOpen !== 'undefined') {
-			$('.arrow:first', '#files_' + autoOpen[0]).not('.ops').click();
-			$('.arrow', '#operation_' + autoOpen[0] + '_' + autoOpen[1]).click();
-			setTimeout(function() {
-				var height = $('#operation_' + autoOpen[0] + '_' + autoOpen[1]).offset().top + $('body').scrollTop();
-				$('html, body').animate({ scrollTop: height }, 800);
-			}, 800);
-		}
+	if (typeof autoOpen !== 'undefined') {
+		$('.arrow:first', '#files_' + autoOpen[0]).not('.ops').click();
+		$('.arrow', '#operation_' + autoOpen[0] + '_' + autoOpen[1]).click();
+		setTimeout(function() {
+			var height = $('#operation_' + autoOpen[0] + '_' + autoOpen[1]).offset().top + $('body').scrollTop();
+			$('html, body').animate({ scrollTop: height }, 800);
+		}, 800);
+	}
   }
 
 function addFile(d, pos) {
@@ -331,7 +331,7 @@ function addOperation(idx, d, pos) {
   var position         = $(d).find("add").attr('position') || $(d).find("search").attr('position') || '';
   var info             = $(d).find("notes").html()         || $(d).attr('info') || '';
 
-  if (!pos && d && (!search === '' || (add === '' && position && position !== 'replace') || $('#file_' + idx).val() === '') && typeof autoOpen === 'undefined') autoOpen = [idx, idx2];
+  if (!pos && d && (!search === '' || (add === '' && position && position !== 'replace') || $('#file_' + idx).val() === '') && typeof autoOpen === 'undefined') var autoOpen = [idx, idx2];
   var vqmversion = $('#vqmver').is(':hidden') ? false : parseInt($('#vqmver').val().split('.').join('')), arrow = (pos || !d) ? 'up' : 'down', hidden = (pos || !d) ? '' : " style=\"display:none;\"";
   var x = "\n\t<div class=\"operation\"" + hidden + " id=\"operation_" + idx + "_" + idx2 + "\">";
   x += "\n\t\t<fieldset class=\"op color_oper\"";
@@ -446,7 +446,10 @@ function addModFile() {
 }
 
 function unCDATA(str) {
-  return String(str).replace("<![CDATA[","").replace("]]>","").replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  str = String(str).replace("<![CDATA[","").replace("]]>","").replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  //Restore leading newlines (Textarea ignores the first newline)
+  if (str.indexOf('\n') === 0 || str.indexOf('\r\n') === 0) str = '\n' + str;
+  return str;
 }
 
 // SHOW and HIDE FILES and OPERATIONS
@@ -1078,7 +1081,7 @@ $('#button-upload').on('click', function() {
     alert("<?php echo $error_file_selected;?>");
     return false;
   }
-  var destdir = dest ? dest : 'Store Root Folder'
+  var destdir = dest ? dest : 'Store Root Folder';
   if (!confirm("<?php echo $text_confirm_upload;?>\n" + destdir)) {
     return false;
   }
