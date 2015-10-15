@@ -2,7 +2,7 @@
 <!-- Created using vQModerator's XML Generator by The Wizard of Osch for http://www.crystalcopy.nl //-->
 <modification>
 	<name><![CDATA[vQModerator]]></name>
-	<version>1.0.5</version>
+	<version>1.0.6</version>
 	<author><![CDATA[The Wizard of Osch, for www.CrystalCopy.nl]]></author>
 	<code>vqmoderator</code>
 	<description><![CDATA[Integrate vQMod file support, and edit OCMod and vQMod files and packages with a feature packed interface]]></description>
@@ -288,7 +288,7 @@
 			$this->error['warning'] = sprintf($this->language->get('error_vqmod'), $this->url->link('extension/modification/vqmodinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'));
 		} elseif (isset($this->error['update']) && $this->error['update'] == 'limit') {
 				$this->error['warning'] = $this->language->get('text_vqmod_limit');
-		} elseif ($this->config->get('vqmod_updates')) {
+		} else {
 			if (isset($vqmver['update']) && $vqmver['update']) {
 				$data['text_refresh'] = sprintf($this->language->get('text_vqmod_update'), 'vQMod', implode('.', str_split($vqmver['vqnew'])), implode('.', str_split($vqmver['vqmod'])), $this->url->link('extension/modification/vqmodinstall', 'token=' . $this->session->data['token'] . '&step=0', 'SSL'), 'vQMod');
 			} elseif (isset($vqmver['updater']) && $vqmver['updater']) {
@@ -389,18 +389,22 @@
 			}
 		}
 		// Get versions, and put in cache
-		$handle = fopen(dirname(DIR_SYSTEM) . "/vqmod/vqmod.php", "r");
-		if ($handle) {
-			while (($line = fgets($handle)) !== false) {
-				if (strpos($line, '$_vqversion')) {
-					$versions['vqmod'] = filter_var($line, FILTER_SANITIZE_NUMBER_INT);
-					break;
+		if (file_exists(dirname(DIR_SYSTEM) . "/vqmod/vqmod.php")) {
+			$handle = fopen(dirname(DIR_SYSTEM) . "/vqmod/vqmod.php", "r");
+			if ($handle) {
+				while (($line = fgets($handle)) !== false) {
+					if (strpos($line, '$_vqversion')) {
+						$versions['vqmod'] = filter_var($line, FILTER_SANITIZE_NUMBER_INT);
+						break;
+					}
 				}
+				fclose($handle);
 			}
-			fclose($handle);
 		}
-		$versions['vqmodr'] = $this->model_extension_modification->getModificationByCode('vqmoderator');
-		$versions['vqmodr'] = filter_var($versions['vqmodr']['version'], FILTER_SANITIZE_NUMBER_INT);
+		if ($interval !== 0) {
+			$versions['vqmodr'] = $this->model_extension_modification->getModificationByCode('vqmoderator');
+			$versions['vqmodr'] = filter_var($versions['vqmodr']['version'], FILTER_SANITIZE_NUMBER_INT);
+		}
 		// Get online versions
 		if ($this->config->get('vqmod_updates') || $interval <= 0.01) {
 			$vqm_online = $this->checkVQModUpdate($versions['last']);
