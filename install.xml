@@ -419,7 +419,7 @@
 			if (is_array($vqm_online)) {
 				$versions['vqnewr'] = $vqm_online['version'];
 				$versions['lastr'] = $vqm_online['last'];
-				if ($versions['vqmodr'] < $versions['vqnewr']) $versions['updater'] = $vqm_online['link'];
+				if ($versions['vqmodr'] < $versions['vqnewr'] && $versions['vqnewr'] < 200) $versions['updater'] = $vqm_online['link'];
 			} elseif ($vqm_online == 'limit') {
 				$this->error['update'] = 'limit';
 			}
