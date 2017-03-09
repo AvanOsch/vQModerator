@@ -36,6 +36,7 @@ $_['text_collapse']          = 'Collapse ';
 $_['text_this_file']         = 'this File';
 $_['text_this_operation']    = 'this Operation';
 $_['text_prev_operations']   = 'Off-Screen Operations';
+$_['text_all_files']         = 'All Files';
 $_['text_all_operations']    = 'All Operations';
 $_['text_modpack']           = 'Modification Package';
 $_['text_confirm_upload']    = 'Are you sure you want to upload to:';

@@ -150,6 +150,7 @@ class ControllerExtensionVqmoderator extends Controller {
 		$data['text_this_file'] = $this->language->get('text_this_file');
 		$data['text_this_operation'] = $this->language->get('text_this_operation');
 		$data['text_prev_operations'] = $this->language->get('text_prev_operations');
+		$data['text_all_files'] = $this->language->get('text_all_files');
 		$data['text_all_operations'] = $this->language->get('text_all_operations');
 		$data['text_modpack'] = $this->language->get('text_modpack');
 		$data['text_confirm_upload'] = $this->language->get('text_confirm_upload');
